@@ -11,6 +11,32 @@ function parseCookies(req) {
   return list;
 }
 
+async function fazerRefresh(refreshToken, res) {
+  var body = 'grant_type=refresh_token'
+    + '&refresh_token=' + encodeURIComponent(refreshToken)
+    + '&client_id=' + encodeURIComponent(process.env.CA_CLIENT_ID)
+    + '&client_secret=' + encodeURIComponent(process.env.CA_CLIENT_SECRET);
+
+  var tokenRes = await fetch('https://auth.contaazul.com/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body
+  });
+
+  var data = await tokenRes.json();
+  if (!data.access_token) throw new Error('Falha ao renovar token');
+
+  var expires = new Date(Date.now() + data.expires_in * 1000).toUTCString();
+  var refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+
+  res.setHeader('Set-Cookie', [
+    'ca_access_token=' + data.access_token + '; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=' + expires,
+    'ca_refresh_token=' + data.refresh_token + '; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=' + refreshExpires
+  ]);
+
+  return data.access_token;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Metodo nao permitido' });
@@ -18,8 +44,9 @@ module.exports = async function handler(req, res) {
 
   var cookies = parseCookies(req);
   var accessToken = cookies.ca_access_token;
+  var refresh = cookies.ca_refresh_token;
 
-  if (!accessToken) {
+  if (!accessToken && !refresh) {
     return res.status(401).json({ error: 'nao_conectado' });
   }
 
@@ -29,18 +56,52 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Se não tem access token mas tem refresh, renova primeiro
+    if (!accessToken && refresh) {
+      accessToken = await fazerRefresh(refresh, res);
+    }
+
     var caRes = await fetch(
-      'https://api.contaazul.com/v1/customers?page=0&size=10',
+      'https://api.contaazul.com/v1/customers?name=' + encodeURIComponent(q) + '&page=0&size=10',
       { headers: { Authorization: 'Bearer ' + accessToken } }
     );
 
-    var statusCode = caRes.status;
-    var rawText = await caRes.text();
+    // Token expirado — tenta renovar e buscar de novo
+    if (caRes.status === 401 && refresh) {
+      accessToken = await fazerRefresh(refresh, res);
+      caRes = await fetch(
+        'https://api.contaazul.com/v1/customers?name=' + encodeURIComponent(q) + '&page=0&size=10',
+        { headers: { Authorization: 'Bearer ' + accessToken } }
+      );
+    }
 
-    return res.status(200).json({
-      clientes: [],
-      debug: 'STATUS: ' + statusCode + ' | BODY: ' + rawText.substring(0, 800)
+    if (!caRes.ok) {
+      var errText = await caRes.text();
+      return res.status(200).json({ clientes: [], debug: errText });
+    }
+
+    var data = await caRes.json();
+    var lista = data.content || data || [];
+
+    var clientes = lista.map(function(p) {
+      return {
+        id: p.id,
+        nome: p.name || p.company_name || '',
+        email: p.email || '',
+        telefone: p.phone || p.mobile_phone || '',
+        endereco: [
+          p.address && p.address.street,
+          p.address && p.address.number,
+          p.address && p.address.neighborhood,
+          p.address && p.address.city,
+          p.address && p.address.state
+        ].filter(Boolean).join(', '),
+        documento: p.cpf || p.cnpj || '',
+        contato: p.contact_name || ''
+      };
     });
+
+    return res.status(200).json({ clientes: clientes });
 
   } catch (err) {
     return res.status(500).json({ error: err.message });
