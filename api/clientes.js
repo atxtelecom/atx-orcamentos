@@ -11,20 +11,24 @@ function parseCookies(req) {
   return list;
 }
 
-async function fazerRefresh(refreshToken, res) {
-  var body = 'grant_type=refresh_token'
-    + '&refresh_token=' + encodeURIComponent(refreshToken)
-    + '&client_id=' + encodeURIComponent(process.env.CA_CLIENT_ID)
-    + '&client_secret=' + encodeURIComponent(process.env.CA_CLIENT_SECRET);
+async function renovarToken(refreshToken, res) {
+  var credencial = Buffer.from(
+    process.env.CA_CLIENT_ID + ':' + process.env.CA_CLIENT_SECRET
+  ).toString('base64');
+
+  var body = 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(refreshToken);
 
   var tokenRes = await fetch('https://auth.contaazul.com/oauth2/token', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' + credencial
+    },
     body: body
   });
 
   var data = await tokenRes.json();
-  if (!data.access_token) throw new Error('Falha ao renovar token');
+  if (!data.access_token) throw new Error('Falha ao renovar token: ' + JSON.stringify(data));
 
   var expires = new Date(Date.now() + data.expires_in * 1000).toUTCString();
   var refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
@@ -38,66 +42,60 @@ async function fazerRefresh(refreshToken, res) {
 }
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Metodo nao permitido' });
-  }
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Metodo nao permitido' });
 
   var cookies = parseCookies(req);
   var accessToken = cookies.ca_access_token;
   var refresh = cookies.ca_refresh_token;
 
-  if (!accessToken && !refresh) {
-    return res.status(401).json({ error: 'nao_conectado' });
-  }
+  if (!accessToken && !refresh) return res.status(401).json({ error: 'nao_conectado' });
 
   var q = req.query.q;
-  if (!q || q.length < 2) {
-    return res.status(400).json({ error: 'Query muito curta' });
-  }
+  if (!q || q.length < 2) return res.status(400).json({ error: 'Query muito curta' });
 
   try {
-    // Se não tem access token mas tem refresh, renova primeiro
     if (!accessToken && refresh) {
-      accessToken = await fazerRefresh(refresh, res);
+      accessToken = await renovarToken(refresh, res);
     }
 
-    var caRes = await fetch(
-      'https://api.contaazul.com/v1/customers?name=' + encodeURIComponent(q) + '&page=0&size=10',
-      { headers: { Authorization: 'Bearer ' + accessToken } }
-    );
+    // Nova API: api-v2.contaazul.com, endpoint /v1/pessoas com busca_textual
+    var url = 'https://api-v2.contaazul.com/v1/pessoas?busca_textual=' +
+      encodeURIComponent(q) + '&pagina=1&tamanho_pagina=10&tipo_pessoa=CLIENTE';
 
-    // Token expirado — tenta renovar e buscar de novo
+    var caRes = await fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + accessToken }
+    });
+
+    // Token expirado — renova e tenta de novo
     if (caRes.status === 401 && refresh) {
-      accessToken = await fazerRefresh(refresh, res);
-      caRes = await fetch(
-        'https://api.contaazul.com/v1/customers?name=' + encodeURIComponent(q) + '&page=0&size=10',
-        { headers: { Authorization: 'Bearer ' + accessToken } }
-      );
+      accessToken = await renovarToken(refresh, res);
+      caRes = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + accessToken }
+      });
     }
 
     if (!caRes.ok) {
       var errText = await caRes.text();
-      return res.status(200).json({ clientes: [], debug: errText });
+      return res.status(200).json({ clientes: [], debug: 'STATUS ' + caRes.status + ': ' + errText });
     }
 
     var data = await caRes.json();
-    var lista = data.content || data || [];
+    var lista = data.itens || data.content || data || [];
 
     var clientes = lista.map(function(p) {
+      var end = p.enderecos && p.enderecos[0];
+      var endStr = end ? [
+        end.logradouro, end.numero, end.bairro, end.cidade, end.estado
+      ].filter(Boolean).join(', ') : '';
+
       return {
         id: p.id,
-        nome: p.name || p.company_name || '',
-        email: p.email || '',
-        telefone: p.phone || p.mobile_phone || '',
-        endereco: [
-          p.address && p.address.street,
-          p.address && p.address.number,
-          p.address && p.address.neighborhood,
-          p.address && p.address.city,
-          p.address && p.address.state
-        ].filter(Boolean).join(', '),
+        nome: p.nome || p.razao_social || p.name || '',
+        email: (p.emails && p.emails[0] && p.emails[0].email) || p.email || '',
+        telefone: (p.telefones && p.telefones[0] && p.telefones[0].numero) || '',
+        endereco: endStr,
         documento: p.cpf || p.cnpj || '',
-        contato: p.contact_name || ''
+        contato: p.nome_contato || ''
       };
     });
 
