@@ -11,6 +11,34 @@ function parseCookies(req) {
   return list;
 }
 
+async function renovarToken(refreshToken, res) {
+  var credencial = Buffer.from(
+    process.env.CA_CLIENT_ID + ':' + process.env.CA_CLIENT_SECRET
+  ).toString('base64');
+
+  var tokenRes = await fetch('https://auth.contaazul.com/oauth2/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' + credencial
+    },
+    body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(refreshToken)
+  });
+
+  var data = await tokenRes.json();
+  if (!data.access_token) throw new Error('Falha ao renovar: ' + JSON.stringify(data));
+
+  var expires = new Date(Date.now() + data.expires_in * 1000).toUTCString();
+  var refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+
+  res.setHeader('Set-Cookie', [
+    'ca_access_token=' + data.access_token + '; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=' + expires,
+    'ca_refresh_token=' + data.refresh_token + '; Path=/; HttpOnly; Secure; SameSite=Lax; Expires=' + refreshExpires
+  ]);
+
+  return data.access_token;
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Metodo nao permitido' });
 
@@ -24,21 +52,48 @@ module.exports = async function handler(req, res) {
   if (!q || q.length < 2) return res.status(400).json({ error: 'Query muito curta' });
 
   try {
+    if (!accessToken && refresh) {
+      accessToken = await renovarToken(refresh, res);
+    }
+
     var url = 'https://api-v2.contaazul.com/v1/pessoas?busca_textual=' +
-      encodeURIComponent(q) + '&pagina=1&tamanho_pagina=10';
+      encodeURIComponent(q) + '&pagina=1&tamanho_pagina=10&tipo_pessoa=CLIENTE';
 
     var caRes = await fetch(url, {
       headers: { 'Authorization': 'Bearer ' + accessToken }
     });
 
-    var statusCode = caRes.status;
-    var rawText = await caRes.text();
+    if (caRes.status === 401 && refresh) {
+      accessToken = await renovarToken(refresh, res);
+      caRes = await fetch(url, {
+        headers: { 'Authorization': 'Bearer ' + accessToken }
+      });
+    }
 
-    return res.status(200).json({
-      clientes: [],
-      status: statusCode,
-      debug: rawText.substring(0, 1000)
+    if (!caRes.ok) {
+      var errText = await caRes.text();
+      return res.status(200).json({ clientes: [], debug: errText });
+    }
+
+    var data = await caRes.json();
+
+    // Estrutura correta: data.items (não itens nem content)
+    var lista = Array.isArray(data) ? data : (data.items || data.itens || data.content || []);
+
+    var clientes = lista.map(function(p) {
+      return {
+        id: p.id,
+        nome: p.nome || p.name || p.razao_social || '',
+        email: p.email || '',
+        telefone: p.telefone || p.phone || '',
+        endereco: [p.logradouro, p.numero, p.bairro, p.cidade, p.estado]
+          .filter(Boolean).join(', '),
+        documento: p.documento || p.cpf || p.cnpj || '',
+        contato: p.nome_contato || ''
+      };
     });
+
+    return res.status(200).json({ clientes: clientes });
 
   } catch (err) {
     return res.status(500).json({ error: err.message });
