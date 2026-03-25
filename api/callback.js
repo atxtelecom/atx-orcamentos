@@ -6,7 +6,7 @@ module.exports = async function handler(req, res) {
     const params = new URLSearchParams();
     params.append('grant_type', 'authorization_code');
     params.append('code', code);
-    params.append('redirect_uri', 'https://atx-orcamentos.vercel.app/api/callback');
+    params.append('redirect_uri', 'https://atx-orcamentos-alpha.vercel.app/api/callback');
     params.append('client_id', process.env.CA_CLIENT_ID);
     params.append('client_secret', process.env.CA_CLIENT_SECRET);
     const tokenRes = await fetch('https://auth.contaazul.com/oauth2/token', {
