@@ -18,9 +18,8 @@ module.exports = async function handler(req, res) {
 
   var cookies = parseCookies(req);
   var accessToken = cookies.ca_access_token;
-  var refresh = cookies.ca_refresh_token;
 
-  if (!accessToken && !refresh) {
+  if (!accessToken) {
     return res.status(401).json({ error: 'nao_conectado' });
   }
 
@@ -31,37 +30,17 @@ module.exports = async function handler(req, res) {
 
   try {
     var caRes = await fetch(
-     'https://api.contaazul.com/v1/customers?page=0&size=10',
+      'https://api.contaazul.com/v1/customers?page=0&size=10',
       { headers: { Authorization: 'Bearer ' + accessToken } }
     );
 
-    if (!caRes.ok) {
-      var errText = await caRes.text();
-      return res.status(200).json({ clientes: [], debug: errText });
-    }
+    var statusCode = caRes.status;
+    var rawText = await caRes.text();
 
-    var data = await caRes.json();
-    var lista = data.content || data || [];
-
-    var clientes = lista.map(function(p) {
-      return {
-        id: p.id,
-        nome: p.name || p.company_name || '',
-        email: p.email || '',
-        telefone: p.phone || p.mobile_phone || '',
-        endereco: [
-          p.address && p.address.street,
-          p.address && p.address.number,
-          p.address && p.address.neighborhood,
-          p.address && p.address.city,
-          p.address && p.address.state
-        ].filter(Boolean).join(', '),
-        documento: p.cpf || p.cnpj || '',
-        contato: p.contact_name || ''
-      };
+    return res.status(200).json({
+      clientes: [],
+      debug: 'STATUS: ' + statusCode + ' | BODY: ' + rawText.substring(0, 800)
     });
-
-    return res.status(200).json({ clientes: clientes });
 
   } catch (err) {
     return res.status(500).json({ error: err.message });
