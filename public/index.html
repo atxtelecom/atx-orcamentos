@@ -223,7 +223,13 @@ table.orc-tbl tbody td.tb{font-weight:700;}
         <div class="add-form-grid">
           <div class="fld">
             <label>Descrição do item</label>
-            <input type="text" id="NI_DESC" placeholder="Ex: Câmera IP Intelbras bullet" onkeydown="if(event.key==='Enter')novoItem()">
+            <div class="inp-wrap">
+              <input type="text" id="NI_DESC" placeholder="Digite para buscar no catálogo..." autocomplete="off"
+                oninput="buscarProduto(this.value)"
+                onblur="setTimeout(function(){document.getElementById('prod-drop').style.display='none'},200)"
+                onkeydown="if(event.key==='Enter'){document.getElementById('prod-drop').style.display='none';novoItem();}">
+              <div id="prod-drop" class="ac-drop"></div>
+            </div>
           </div>
           <div class="fld">
             <label>Quantidade</label>
@@ -388,6 +394,50 @@ function dataHoje() {
 
 function gv(id) { return document.getElementById(id).value; }
 
+
+// ─────────────────────────────────────────────────────────────
+//  BUSCA DE PRODUTOS (CATÁLOGO CONTA AZUL)
+// ─────────────────────────────────────────────────────────────
+var TIMER_PROD = null;
+
+function buscarProduto(q) {
+  clearTimeout(TIMER_PROD);
+  var drop = document.getElementById('prod-drop');
+  if (!q || q.length < 2) { drop.style.display = 'none'; return; }
+  TIMER_PROD = setTimeout(function() {
+    drop.innerHTML = '<div class="ac-info">Buscando no catálogo...</div>';
+    drop.style.display = 'block';
+    fetch('/api/produtos?q=' + encodeURIComponent(q))
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.error === 'nao_conectado') {
+          drop.innerHTML = '<div class="ac-info">⚠ Conecte o Conta Azul para buscar produtos</div>';
+          return;
+        }
+        if (!d.produtos || !d.produtos.length) {
+          drop.style.display = 'none';
+          return;
+        }
+        drop.innerHTML = d.produtos.map(function(p, i) {
+          var precoStr = p.preco > 0 ? ' — R$ ' + p.preco.toFixed(2).replace('.', ',') : '';
+          return '<div class="ac-row" onmousedown="selecionarProduto(' + JSON.stringify(p).replace(/"/g, '&quot;') + ')">' +
+            '<div class="ac-nome">' + esc(p.nome) + '</div>' +
+            '<div class="ac-det">' + (p.codigo ? 'Cód: ' + esc(p.codigo) : '') + precoStr + '</div></div>';
+        }).join('');
+      })
+      .catch(function() { drop.style.display = 'none'; });
+  }, 350);
+}
+
+function selecionarProduto(p) {
+  document.getElementById('NI_DESC').value = p.nome;
+  if (p.preco > 0) {
+    document.getElementById('NI_PRECO').value = p.preco.toFixed(2).replace('.', ',');
+  }
+  document.getElementById('prod-drop').style.display = 'none';
+  document.getElementById('NI_QTD').focus();
+}
+
 // ─────────────────────────────────────────────────────────────
 //  CONTA AZUL
 // ─────────────────────────────────────────────────────────────
@@ -412,7 +462,7 @@ function setCABar(on) {
 }
 
 function conectarCA() {
-  var id = '4c28bse0d4aoblrl5jq2c3tnv3';
+  var id = '4n0rgm72a203713eqqhlkvo946';
   var uri = encodeURIComponent('https://atx-orcamentos-alpha.vercel.app/api/callback');
   var sc  = encodeURIComponent('openid profile aws.cognito.signin.user.admin');
   location.href = 'https://auth.contaazul.com/oauth2/authorize?response_type=code' +
