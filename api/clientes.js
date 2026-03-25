@@ -56,8 +56,12 @@ module.exports = async function handler(req, res) {
       accessToken = await renovarToken(refresh, res);
     }
 
-    var url = 'https://api-v2.contaazul.com/v1/pessoas?busca_textual=' +
-      encodeURIComponent(q) + '&pagina=1&tamanho_pagina=10&tipo_pessoa=CLIENTE';
+    // Parâmetro correto: "busca" (busca por nome ou documento)
+    // tipo_perfil: Cliente
+    var url = 'https://api-v2.contaazul.com/v1/pessoas' +
+      '?busca=' + encodeURIComponent(q) +
+      '&tipo_perfil=Cliente' +
+      '&pagina=1&tamanho_pagina=10';
 
     var caRes = await fetch(url, {
       headers: { 'Authorization': 'Bearer ' + accessToken }
@@ -76,20 +80,21 @@ module.exports = async function handler(req, res) {
     }
 
     var data = await caRes.json();
-
-    // Estrutura correta: data.items (não itens nem content)
-    var lista = Array.isArray(data) ? data : (data.items || data.itens || data.content || []);
+    var lista = Array.isArray(data) ? data : (data.items || []);
 
     var clientes = lista.map(function(p) {
+      var end = p.endereco || {};
+      var endStr = [end.logradouro, end.numero, end.bairro, end.cidade, end.estado]
+        .filter(Boolean).join(', ');
+
       return {
         id: p.id,
-        nome: p.nome || p.name || p.razao_social || '',
+        nome: p.nome || '',
         email: p.email || '',
-        telefone: p.telefone || p.phone || '',
-        endereco: [p.logradouro, p.numero, p.bairro, p.cidade, p.estado]
-          .filter(Boolean).join(', '),
-        documento: p.documento || p.cpf || p.cnpj || '',
-        contato: p.nome_contato || ''
+        telefone: p.telefone || '',
+        endereco: endStr,
+        documento: p.documento || '',
+        contato: ''
       };
     });
 
