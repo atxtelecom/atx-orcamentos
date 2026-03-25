@@ -3,400 +3,642 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ATX Telecom — Gerador de Orçamentos</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>ATX Telecom — Orçamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --atx-blue: #0A2463; --atx-accent: #1E90FF; --atx-light: #E8F0FE;
-    --atx-green: #00875A; --atx-red: #C0392B;
-    --bg: #F4F6FB; --card: #FFFFFF; --border: #D0D9EF;
-    --text: #0D1B3E; --muted: #6B7A9B; --radius: 12px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  header { background: var(--atx-blue); color: white; padding: 0 40px; height: 64px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 12px rgba(10,36,99,0.3); }
-  .header-logo { font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: 2px; }
-  .header-logo span { color: var(--atx-accent); }
-  .header-sub { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 300; letter-spacing: 1px; text-transform: uppercase; }
-  .ca-banner { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; }
-  .ca-banner.desconectado { background: #FFF8E1; border: 1px solid #F59E0B; color: #78350F; }
-  .ca-banner.conectado { background: #E6F4EE; border: 1px solid #00875A; color: #00593B; }
-  .ca-btn { padding: 7px 16px; background: var(--atx-blue); color: white; border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; }
-  .ca-btn:hover { background: #0D2E80; }
-  .container { max-width: 1100px; margin: 0 auto; padding: 36px 24px; }
-  .two-col { display: grid; grid-template-columns: 1fr 1.1fr; gap: 28px; align-items: start; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; box-shadow: 0 1px 4px rgba(10,36,99,0.06); }
-  .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--atx-accent); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
-  .card-title::before { content: ''; display: block; width: 3px; height: 14px; background: var(--atx-accent); border-radius: 2px; }
-  .form-row { margin-bottom: 16px; }
-  label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  input, textarea, select { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: #FAFBFD; transition: border-color 0.2s; outline: none; }
-  input:focus, textarea:focus, select:focus { border-color: var(--atx-accent); box-shadow: 0 0 0 3px rgba(30,144,255,0.1); background: white; }
-  textarea { resize: vertical; min-height: 120px; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; }
-  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-  .hint { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
-  .input-wrap { position: relative; }
-  .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid var(--atx-accent); border-top: none; border-radius: 0 0 8px 8px; z-index: 100; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 12px rgba(10,36,99,0.12); }
-  .autocomplete-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #EEF1F8; }
-  .autocomplete-item:hover { background: var(--atx-light); }
-  .autocomplete-nome { font-weight: 600; font-size: 13px; }
-  .autocomplete-detalhe { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .autocomplete-msg { padding: 10px 14px; font-size: 12px; color: var(--muted); font-style: italic; }
-  .btn-generate { width: 100%; padding: 14px; background: var(--atx-blue); color: white; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.2s; }
-  .btn-generate:hover { background: #0D2E80; }
-  .btn-generate:disabled { background: var(--muted); cursor: not-allowed; }
-  .btn-secondary { padding: 10px 20px; background: var(--atx-light); color: var(--atx-blue); border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .btn-secondary:hover { background: #d0e4fc; }
-  .status { display: none; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-top: 12px; }
-  .status.show { display: flex; }
-  .status.loading { background: var(--atx-light); color: var(--atx-blue); }
-  .status.error { background: #FDECEA; color: var(--atx-red); }
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(30,144,255,0.3); border-top-color: var(--atx-accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .orcamento { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; font-size: 13px; }
-  .orc-header { background: var(--atx-blue); color: white; padding: 24px 28px; display: flex; justify-content: space-between; }
-  .orc-logo { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: 3px; }
-  .orc-logo span { color: var(--atx-accent); }
-  .orc-company-info { font-size: 11px; color: rgba(255,255,255,0.65); line-height: 1.8; text-align: right; }
-  .orc-company-info strong { color: white; }
-  .orc-body { padding: 24px 28px; }
-  .orc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
-  .orc-meta-block label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-  .orc-meta-block p { font-size: 13px; font-weight: 500; margin-top: 2px; }
-  .orc-intro { background: var(--atx-light); border-left: 3px solid var(--atx-accent); border-radius: 0 6px 6px 0; padding: 14px 16px; font-size: 12px; color: #2A3F6B; line-height: 1.7; margin-bottom: 20px; }
-  .orc-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--atx-blue); background: #EEF3FC; padding: 8px 12px; border-radius: 6px; margin: 16px 0 8px; }
-  table.items { width: 100%; border-collapse: collapse; font-size: 12px; }
-  table.items thead tr { background: var(--atx-blue); color: white; }
-  table.items thead th { padding: 8px 10px; text-align: left; font-weight: 500; font-size: 11px; text-transform: uppercase; }
-  table.items thead th:last-child, table.items thead th:nth-last-child(2) { text-align: right; }
-  table.items tbody tr { border-bottom: 1px solid #EEF1F8; }
-  table.items tbody tr:nth-child(even) { background: #F8FAFF; }
-  table.items tbody td { padding: 8px 10px; }
-  table.items tbody td:last-child, table.items tbody td:nth-last-child(2) { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
-  table.items tfoot td { padding: 10px; font-weight: 600; border-top: 2px solid var(--atx-blue); }
-  table.items tfoot td:last-child { text-align: right; color: var(--atx-blue); font-size: 14px; font-family: 'JetBrains Mono', monospace; }
-  .orc-pagamento { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
-  .orc-pagamento strong { color: var(--text); }
-  .orc-validade { text-align: center; font-size: 11px; color: var(--muted); padding: 12px; border-top: 1px dashed var(--border); margin-top: 16px; }
-  .orc-footer { background: var(--atx-blue); color: rgba(255,255,255,0.6); padding: 12px 28px; font-size: 11px; text-align: center; }
-  .preview-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
-  .orc-num { display: inline-block; background: var(--atx-accent); color: white; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
-  .exemplo-chip { display: inline-block; padding: 5px 12px; background: var(--atx-light); border: 1px solid var(--border); border-radius: 20px; font-size: 11px; color: var(--atx-blue); cursor: pointer; margin: 3px 2px; font-weight: 500; }
-  .exemplo-chip:hover { background: #d0e4fc; }
-  @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+:root {
+  --navy:   #1A1F5E;
+  --navy2:  #141850;
+  --navy3:  #0F1240;
+  --green:  #3DBE5A;
+  --green2: #2DA048;
+  --green3: #e8fbed;
+  --blue:   #1E4DB7;
+  --light:  #F0F4FF;
+  --bg:     #F2F5FB;
+  --card:   #fff;
+  --border: #E0E7F3;
+  --text:   #1A1F5E;
+  --muted:  #6B7A9E;
+  --red:    #E53935;
+  --amber:  #F59E0B;
+  --r:      10px;
+  --shadow: 0 2px 12px rgba(26,31,94,.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* HEADER */
+header {
+  background: var(--navy);
+  height: 58px; padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 2px 20px rgba(26,31,94,.35);
+}
+.logo-wrap { display: flex; align-items: center; gap: 12px; }
+.logo-box {
+  background: #fff; border-radius: 7px;
+  padding: 4px 10px;
+  display: flex; align-items: center;
+}
+.logo-atx { font-size: 17px; font-weight: 800; color: var(--navy); letter-spacing: 1px; }
+.logo-telecom { font-size: 9px; font-weight: 800; color: var(--green); letter-spacing: 2px; text-transform: uppercase; margin-top: -1px; }
+.logo-accent { color: var(--green); }
+.header-label { font-size: 10px; color: rgba(255,255,255,.45); letter-spacing: 1.5px; text-transform: uppercase; border-left: 1px solid rgba(255,255,255,.15); padding-left: 12px; }
+.header-tags { display: flex; gap: 6px; }
+.htag { background: rgba(61,190,90,.15); border: 1px solid rgba(61,190,90,.25); color: var(--green); padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+
+/* LAYOUT */
+.app { display: grid; grid-template-columns: 450px 1fr; min-height: calc(100vh - 58px); }
+
+/* EDITOR */
+.editor { padding: 18px; overflow-y: auto; border-right: 1px solid var(--border); background: var(--bg); }
+.sec-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--navy); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.sec-label::before { content:''; width:3px; height:11px; background: var(--green); border-radius:2px; display:block; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+
+/* FIELDS */
+.field { margin-bottom: 11px; }
+.field:last-child { margin-bottom: 0; }
+.field label { display:block; font-size:10px; font-weight:600; color:var(--muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:.5px; }
+.field input, .field select, .field textarea { width:100%; padding:8px 11px; border:1.5px solid var(--border); border-radius:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; color:var(--text); background:#FAFBFE; outline:none; transition:border-color .15s,box-shadow .15s; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--navy); box-shadow:0 0 0 3px rgba(26,31,94,.1); background:#fff; }
+.field textarea { resize:none; height:50px; font-size:12px; line-height:1.6; }
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+
+/* AUTOCOMPLETE */
+.input-wrap { position:relative; }
+.ac-list { position:absolute; top:100%; left:0; right:0; background:#fff; border:1.5px solid var(--navy); border-top:none; border-radius:0 0 8px 8px; z-index:100; max-height:180px; overflow-y:auto; box-shadow:0 8px 20px rgba(26,31,94,.12); display:none; }
+.ac-item { padding:8px 12px; cursor:pointer; border-bottom:1px solid #EEF1F8; transition:background .1s; }
+.ac-item:hover { background:var(--light); }
+.ac-nome { font-weight:600; font-size:13px; }
+.ac-det { font-size:11px; color:var(--muted); margin-top:1px; }
+.ac-msg { padding:9px 12px; font-size:12px; color:var(--muted); font-style:italic; }
+
+/* CHIPS */
+.chips-wrap { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+.chip { padding:4px 10px; background:var(--green3); border:1px solid #a8e6b8; border-radius:20px; font-size:11px; font-weight:600; color:var(--green2); cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:4px; }
+.chip:hover { background:#d1f5db; border-color:var(--green); }
+
+/* ADD */
+.add-box { background:var(--bg); border:1.5px dashed #bfcde8; border-radius:var(--r); padding:13px; margin-bottom:10px; }
+.add-grid { display:grid; grid-template-columns:1fr 60px 60px 82px 32px; gap:7px; align-items:end; }
+.add-grid .field { margin-bottom:0; }
+.btn-add { width:32px; height:32px; background:var(--green); color:#fff; border:none; border-radius:7px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+.btn-add:hover { background:var(--green2); }
+
+/* ITEM LIST */
+.items-wrap { display:flex; flex-direction:column; gap:5px; }
+.item-row { display:grid; grid-template-columns:1fr 52px 50px 78px 26px; align-items:center; gap:6px; background:#fff; border:1px solid var(--border); border-radius:8px; padding:7px 10px; font-size:12px; animation:slideIn .18s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateY(-3px)} to{opacity:1;transform:translateY(0)} }
+.item-desc { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.item-qty { font-size:11px; color:var(--muted); text-align:center; }
+.item-uv { font-size:11px; color:var(--muted); text-align:right; font-family:'JetBrains Mono',monospace; }
+.item-sv { font-size:12px; font-weight:700; text-align:right; font-family:'JetBrains Mono',monospace; color:var(--navy); }
+.btn-del { background:none; border:none; color:#CBD0E0; cursor:pointer; font-size:15px; transition:color .15s; }
+.btn-del:hover { color:var(--red); }
+.items-empty { text-align:center; padding:14px; color:var(--muted); font-size:12px; }
+
+/* TOTAIS */
+.tot-card { background:var(--navy); border-radius:var(--r); padding:14px 16px; margin-top:10px; }
+.tot-row { display:flex; justify-content:space-between; font-size:12px; color:rgba(255,255,255,.6); margin-bottom:5px; }
+.tot-row span:last-child { font-family:'JetBrains Mono',monospace; }
+.tot-row.grand { font-size:16px; font-weight:800; color:#fff; border-top:1px solid rgba(255,255,255,.15); padding-top:7px; margin-top:4px; margin-bottom:0; }
+.tot-row.grand span:first-child { color:var(--green); }
+
+/* BTN */
+.btn-prev { width:100%; padding:11px; background:var(--navy); color:#fff; border:none; border-radius:var(--r); font-family:'Plus Jakarta Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; transition:background .15s; }
+.btn-prev:hover { background:var(--navy2); }
+
+/* PREVIEW */
+.preview-panel { background:#E4EBF7; display:flex; flex-direction:column; }
+.prev-bar { background:#fff; border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; }
+.prev-bar-title { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+.act-btns { display:flex; gap:6px; }
+.btn-act { padding:7px 13px; border-radius:7px; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; cursor:pointer; border:none; display:flex; align-items:center; gap:5px; transition:all .15s; white-space:nowrap; }
+.btn-act.pdf { background:var(--navy); color:#fff; }
+.btn-act.pdf:hover { background:var(--navy2); }
+.btn-act.wpp { background:#25D366; color:#fff; }
+.btn-act.wpp:hover { background:#1DAA55; }
+.btn-act.mail { background:var(--light); color:var(--navy); border:1px solid var(--border); }
+.btn-act.mail:hover { background:#dce6ff; }
+.prev-scroll { flex:1; overflow-y:auto; padding:22px; display:flex; justify-content:center; align-items:flex-start; }
+.prev-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:10px; color:var(--muted); opacity:.45; }
+
+/* CA BAR */
+.ca-bar { display:flex; align-items:center; justify-content:space-between; padding:9px 13px; border-radius:8px; margin-bottom:12px; font-size:12px; }
+.ca-bar.off { background:#FFF8E1; border:1px solid var(--amber); color:#78350F; }
+.ca-bar.on { background:var(--green3); border:1px solid #a8e6b8; color:#1a5c2e; }
+.ca-bar-btn { padding:5px 11px; background:var(--navy); color:#fff; border:none; border-radius:6px; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; cursor:pointer; }
+
+/* ══════════════════════════════════════════
+   ORÇAMENTO IMPRESSO
+══════════════════════════════════════════ */
+.orc { background:#fff; width:740px; border-radius:12px; overflow:hidden; box-shadow:0 8px 40px rgba(26,31,94,.18); font-size:12px; }
+
+/* HERO */
+.orc-hero { background:var(--navy); padding:0; }
+.orc-hero-top { padding:24px 30px 0; display:flex; justify-content:space-between; align-items:center; }
+.orc-brand-area { display:flex; align-items:center; gap:16px; }
+.orc-logo-box { background:#fff; border-radius:9px; padding:7px 14px; }
+.orc-logo-atx { font-size:20px; font-weight:800; color:var(--navy); letter-spacing:1px; line-height:1; }
+.orc-logo-tel { font-size:9px; font-weight:800; color:var(--green); letter-spacing:2.5px; text-transform:uppercase; }
+.orc-tagline-block { }
+.orc-tagline { font-size:11px; font-weight:700; color:#fff; }
+.orc-tagline em { color:var(--green); font-style:normal; }
+.orc-sub-tagline { font-size:9px; color:rgba(255,255,255,.45); letter-spacing:1px; margin-top:1px; text-transform:uppercase; }
+.orc-contact-area { text-align:right; }
+.orc-contact-area p { font-size:9.5px; color:rgba(255,255,255,.6); line-height:2; }
+.orc-contact-area strong { color:#fff; font-size:10px; }
+.orc-contact-area a { color:var(--green); text-decoration:none; font-size:9.5px; }
+
+/* FAIXA VERDE */
+.orc-stripe {
+  background: var(--green);
+  padding: 8px 30px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 18px;
+}
+.orc-stripe-num { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:var(--navy); letter-spacing:1px; }
+.orc-stripe-tags { display:flex; gap:6px; }
+.orc-stripe-tag { background:rgba(26,31,94,.15); color:var(--navy); font-size:8px; font-weight:700; padding:2px 8px; border-radius:3px; text-transform:uppercase; letter-spacing:.5px; }
+
+/* BODY */
+.orc-body { padding:22px 30px; }
+
+/* META */
+.orc-meta { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--border); border-radius:9px; overflow:hidden; margin-bottom:18px; }
+.orc-mc { padding:11px 14px; background:#FAFBFE; border-right:1px solid var(--border); }
+.orc-mc:nth-child(2) { border-right:none; }
+.orc-mc:nth-child(3),.orc-mc:nth-child(4) { border-top:1px solid var(--border); }
+.orc-mc:nth-child(4) { border-right:none; }
+.orc-mc label { font-size:8px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); font-weight:700; display:block; margin-bottom:2px; }
+.orc-mc p { font-size:11.5px; font-weight:700; line-height:1.4; }
+.orc-mc .sp { font-size:10px; font-weight:400; color:var(--muted); }
+
+/* SEÇÃO */
+.orc-sec { margin-bottom:16px; }
+.orc-sec-hd { display:flex; align-items:center; gap:9px; padding:7px 12px; background:var(--light); border-left:3px solid var(--green); border-radius:0 6px 6px 0; margin-bottom:7px; }
+.orc-sec-ico { font-size:13px; }
+.orc-sec-title { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:var(--navy); }
+.orc-sec-badge { margin-left:auto; background:var(--green); color:#fff; font-size:8px; font-weight:700; padding:2px 7px; border-radius:9px; }
+
+/* TABLE */
+table.t { width:100%; border-collapse:collapse; font-size:11px; }
+table.t thead tr { background:var(--navy); }
+table.t thead th { padding:6px 9px; text-align:left; font-weight:700; font-size:9px; text-transform:uppercase; letter-spacing:.5px; color:rgba(255,255,255,.8); }
+table.t thead th.c { text-align:center; }
+table.t thead th.r { text-align:right; }
+table.t tbody tr { border-bottom:1px solid #EEF1F8; transition:background .1s; }
+table.t tbody tr:hover { background:#F7FAFF; }
+table.t tbody td { padding:7px 9px; }
+table.t tbody td.c { text-align:center; color:var(--muted); }
+table.t tbody td.r { text-align:right; font-family:'JetBrains Mono',monospace; }
+table.t tbody td.b { font-weight:700; }
+.inum { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); background:var(--bg); padding:1px 5px; border-radius:3px; }
+.sec-sub { text-align:right; font-size:10px; color:var(--muted); margin-top:4px; font-family:'JetBrains Mono',monospace; }
+
+/* TOTAL */
+.orc-total { margin-top:18px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.orc-total-inner { padding:11px 16px; background:#FAFBFE; }
+.orc-tr { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); padding:2px 0; }
+.orc-tr span:last-child { font-family:'JetBrains Mono',monospace; }
+.orc-total-grand { background:var(--navy); padding:14px 20px; display:flex; justify-content:space-between; align-items:center; }
+.orc-total-grand .label { font-size:12px; font-weight:700; color:rgba(255,255,255,.8); }
+.orc-total-grand .value { font-size:22px; font-weight:800; color:var(--green); font-family:'JetBrains Mono',monospace; }
+
+/* OBS */
+.orc-obs { margin-top:14px; padding:10px 13px; background:#FFFBEA; border-left:3px solid var(--amber); border-radius:0 7px 7px 0; font-size:10.5px; color:#78350F; line-height:1.7; }
+
+/* PGTO */
+.orc-pgto { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:14px; }
+.orc-pgto-item { background:var(--light); border-radius:8px; padding:9px 12px; border:1px solid #d0dcf5; }
+.orc-pgto-item label { font-size:8px; text-transform:uppercase; letter-spacing:1px; color:var(--navy); font-weight:800; display:block; margin-bottom:2px; }
+.orc-pgto-item p { font-size:10.5px; font-weight:700; color:var(--navy); }
+
+/* FOOTER */
+.orc-footer { background:var(--navy); padding:14px 30px; display:flex; align-items:center; justify-content:space-between; margin-top:18px; }
+.orc-footer-brand { display:flex; align-items:center; gap:12px; }
+.orc-footer-logo { background:rgba(255,255,255,.12); border-radius:6px; padding:4px 10px; }
+.orc-footer-logo .fatx { font-size:14px; font-weight:800; color:#fff; letter-spacing:1px; }
+.orc-footer-logo .ftel { font-size:7px; font-weight:800; color:var(--green); letter-spacing:2px; }
+.orc-footer-slogan { font-size:9px; color:rgba(255,255,255,.4); letter-spacing:.5px; }
+.orc-footer-contacts { text-align:right; font-size:9.5px; color:rgba(255,255,255,.55); line-height:1.9; }
+.orc-footer-contacts a { color:var(--green); text-decoration:none; }
+.orc-validade { background:var(--navy2); text-align:center; padding:6px 30px 10px; font-size:9px; color:rgba(255,255,255,.35); border-top:1px solid rgba(255,255,255,.06); }
+
+@media (max-width:900px) { .app { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <header>
-  <div>
-    <div class="header-logo">AT<span>X</span> TELECOM</div>
-    <div class="header-sub">Gerador de Orçamentos</div>
+  <div class="logo-wrap">
+    <div class="logo-box">
+      <div>
+        <div class="logo-atx">AT<span class="logo-accent">X</span></div>
+        <div class="logo-telecom">Telecom</div>
+      </div>
+    </div>
+    <div class="header-label">Gerador de Orçamentos</div>
   </div>
-  <div style="font-size:12px;color:rgba(255,255,255,0.5);">Santo André — SP</div>
+  <div class="header-tags">
+    <span class="htag">PABX · VoIP</span>
+    <span class="htag">CFTV</span>
+    <span class="htag">Automação</span>
+    <span class="htag">Acesso</span>
+  </div>
 </header>
 
-<div class="container">
-  <div id="ca-banner" class="ca-banner desconectado">
-    <div><strong>Conta Azul não conectado</strong> — conecte para buscar clientes automaticamente</div>
-    <button class="ca-btn" onclick="conectarCA()">🔗 Conectar Conta Azul</button>
-  </div>
+<div class="app">
 
-  <div class="two-col">
-    <div>
-      <div class="card" style="margin-bottom:20px;">
-        <div class="card-title">Dados do cliente</div>
-        <div class="form-row">
-          <label>Empresa / Cliente</label>
-          <div class="input-wrap">
-            <input type="text" id="cliente-nome" placeholder="Digite para buscar no Conta Azul..." autocomplete="off" oninput="buscarCliente(this.value)">
-            <div id="ac-list" class="autocomplete-list" style="display:none;"></div>
-          </div>
-          <div id="ca-badge" style="display:none;margin-top:4px;font-size:11px;color:var(--atx-green);font-weight:600;">✓ Cliente importado do Conta Azul</div>
-        </div>
-        <div class="form-row">
-          <label>Endereço</label>
-          <input type="text" id="cliente-end" placeholder="Preenchido automaticamente ou digite">
-        </div>
-        <div class="form-grid-2">
-          <div class="form-row">
-            <label>Contato / Att.</label>
-            <input type="text" id="cliente-att" placeholder="Ex: Rafael">
-          </div>
-          <div class="form-row">
-            <label>Referência / Tipo</label>
-            <input type="text" id="cliente-ref" placeholder="Ex: Segurança eletrônica">
-          </div>
-        </div>
-        <div class="form-grid-2">
-          <div class="form-row">
-            <label>E-mail</label>
-            <input type="text" id="cliente-email" placeholder="Preenchido automaticamente">
-          </div>
-          <div class="form-row">
-            <label>Telefone</label>
-            <input type="text" id="cliente-tel" placeholder="Preenchido automaticamente">
-          </div>
-        </div>
-      </div>
+  <!-- EDITOR -->
+  <div class="editor">
 
-      <div class="card" style="margin-bottom:20px;">
-        <div class="card-title">Itens levantados pelo técnico</div>
-        <div class="form-row">
-          <textarea id="itens-input" placeholder="Cole aqui exatamente como o técnico anotou:&#10;&#10;03 pontos rede&#10;03 ramal&#10;100 m cabo ci&#10;60 m cat 5&#10;03 rj45 / 03 rj11&#10;06 keystone"></textarea>
-          <div class="hint">A IA interpreta a anotação do técnico e organiza em seções. <strong>Pode incluir mão de obra também.</strong></div>
-        </div>
-        <div style="margin-top:8px;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Exemplos rápidos:</div>
-          <span class="exemplo-chip" onclick="ex('rede')">📡 Rede</span>
-          <span class="exemplo-chip" onclick="ex('cameras')">📷 Câmeras</span>
-          <span class="exemplo-chip" onclick="ex('acesso')">🔑 Controle acesso</span>
-          <span class="exemplo-chip" onclick="ex('telefonia')">📞 Telefonia</span>
-        </div>
-      </div>
-
-      <div class="card" style="margin-bottom:20px;">
-        <div class="card-title">Condições comerciais</div>
-        <div class="form-grid-3">
-          <div class="form-row">
-            <label>Pagamento</label>
-            <select id="pagamento">
-              <option>30/60/90 dias boleto</option>
-              <option>À vista</option>
-              <option>50% entrada + 50% entrega</option>
-              <option>30/60 dias boleto</option>
-              <option>Cartão parcelado</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>Prazo execução</label>
-            <input type="text" id="prazo" placeholder="Ex: 5 dias úteis">
-          </div>
-          <div class="form-row">
-            <label>Validade</label>
-            <input type="text" id="validade" value="15 dias">
-          </div>
-        </div>
-        <div class="form-row">
-          <label>Observações (opcional)</label>
-          <input type="text" id="obs" placeholder="Ex: Inclui instalação. Material Intelbras homologado.">
-        </div>
-      </div>
-
-      <button class="btn-generate" onclick="gerarOrcamento()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-        Gerar Orçamento com IA
-      </button>
-      <div class="status loading" id="st-load"><div class="spinner"></div><span>Analisando itens e montando orçamento...</span></div>
-      <div class="status error" id="st-err"><span>⚠</span><span id="err-txt"></span></div>
+    <div id="ca-bar" class="ca-bar off">
+      <div><strong>Conta Azul</strong> — conecte para buscar clientes</div>
+      <button class="ca-bar-btn" onclick="conectarCA()">🔗 Conectar</button>
     </div>
 
-    <div>
-      <div id="placeholder-area">
-        <div class="card" style="text-align:center;padding:48px 28px;border-style:dashed;">
-          <div style="font-size:40px;margin-bottom:12px;">📄</div>
-          <div style="font-weight:600;font-size:15px;color:var(--atx-blue);margin-bottom:6px;">O orçamento aparece aqui</div>
-          <div style="font-size:13px;color:var(--muted);line-height:1.6;">Preencha os dados e cole os itens<br>do técnico para começar.</div>
+    <div class="card">
+      <div class="sec-label">Dados do cliente</div>
+      <div class="field">
+        <label>Empresa / Cliente</label>
+        <div class="input-wrap">
+          <input type="text" id="f-cli" placeholder="Buscar no Conta Azul ou digitar..." autocomplete="off" oninput="buscarCliente(this.value)" onchange="prev()">
+          <div id="ac-list" class="ac-list"></div>
+        </div>
+        <div id="ca-badge" style="display:none;font-size:10px;color:var(--green2);font-weight:700;margin-top:4px;">✓ Importado do Conta Azul</div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Contato / Att.</label><input type="text" id="f-att" placeholder="Nome do responsável" oninput="prev()"></div>
+        <div class="field"><label>Referência</label><input type="text" id="f-ref" placeholder="Ex: Sistema de PABX IP" oninput="prev()"></div>
+      </div>
+      <div class="field"><label>Endereço</label><input type="text" id="f-end" placeholder="Rua, nº — Bairro, Cidade - SP" oninput="prev()"></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label">Itens do orçamento</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Atalhos rápidos</div>
+      <div class="chips-wrap">
+        <span class="chip" onclick="chip('Aparelho telefônico IP','pç',1,0)">📞 Aparelho IP</span>
+        <span class="chip" onclick="chip('Central PABX Intelbras','pç',1,0)">☎️ PABX</span>
+        <span class="chip" onclick="chip('Câmera IP Intelbras','pç',1,0)">📷 Câmera IP</span>
+        <span class="chip" onclick="chip('DVR / NVR Intelbras','pç',1,0)">🖥️ DVR/NVR</span>
+        <span class="chip" onclick="chip('Leitora biométrica','pç',1,0)">🔑 Controle acesso</span>
+        <span class="chip" onclick="chip('Cabo Cat5e','m',1,3.80)">🔌 Cat5e</span>
+        <span class="chip" onclick="chip('Cabo CI','m',1,2.10)">🔌 Cabo CI</span>
+        <span class="chip" onclick="chip('Conector RJ45','pç',1,1.10)">🔧 RJ45</span>
+        <span class="chip" onclick="chip('Keystone Cat5e','pç',1,6.20)">🔧 Keystone</span>
+        <span class="chip" onclick="chip('Canaleta 20x10','pç',1,14)">📦 Canaleta</span>
+        <span class="chip" onclick="chip('Mão de obra instalação','vb',1,0)">🔨 Mão de obra</span>
+      </div>
+
+      <div class="add-box">
+        <div class="add-grid">
+          <div class="field"><label>Descrição</label><input type="text" id="ni-d" placeholder="Ex: Central PABX 16 ramais..." onkeydown="if(event.key==='Enter')add()"></div>
+          <div class="field"><label>Qtd</label><input type="number" id="ni-q" value="1" min="1" onkeydown="if(event.key==='Enter')add()"></div>
+          <div class="field"><label>Und.</label><select id="ni-u"><option>pç</option><option>m</option><option>br</option><option>vb</option><option>cx</option><option>un</option></select></div>
+          <div class="field"><label>R$ unit.</label><input type="number" id="ni-p" value="0" min="0" step="0.01" onkeydown="if(event.key==='Enter')add()"></div>
+          <button class="btn-add" onclick="add()">+</button>
         </div>
       </div>
-      <div id="preview-area" style="display:none;">
-        <div class="card-title" style="margin-bottom:12px;">Prévia do orçamento</div>
-        <div id="orc-preview"></div>
-        <div class="preview-actions">
-          <button class="btn-secondary" onclick="copiar()">📋 Copiar texto</button>
-          <button class="btn-secondary" onclick="imprimir()">🖨️ Imprimir / PDF</button>
+
+      <div id="items-wrap" class="items-wrap">
+        <div id="items-empty" class="items-empty">Nenhum item adicionado.</div>
+      </div>
+
+      <div id="tot-card" class="tot-card" style="display:none;">
+        <div class="tot-row"><span>Materiais</span><span id="t-mat">R$ 0,00</span></div>
+        <div class="tot-row"><span>Mão de obra</span><span id="t-mo">R$ 0,00</span></div>
+        <div class="tot-row grand"><span>Total geral</span><span id="t-tot">R$ 0,00</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-label">Condições comerciais</div>
+      <div class="g2">
+        <div class="field"><label>Pgto — Materiais</label>
+          <select id="f-pmat" onchange="prev()">
+            <option>Faturado 30/60 dias</option>
+            <option>À vista</option>
+            <option>30/60/90 dias</option>
+            <option>50% entrada + 50% entrega</option>
+          </select>
+        </div>
+        <div class="field"><label>Pgto — Mão de obra</label>
+          <select id="f-pmo" onchange="prev()">
+            <option>Faturado 15/45 dias</option>
+            <option>À vista</option>
+            <option>30 dias</option>
+            <option>50% entrada + 50% entrega</option>
+          </select>
         </div>
       </div>
+      <div class="g2">
+        <div class="field"><label>Prazo de execução</label><input type="text" id="f-prazo" placeholder="Ex: 5 dias úteis" oninput="prev()"></div>
+        <div class="field"><label>Validade</label><input type="text" id="f-val" value="15 dias" oninput="prev()"></div>
+      </div>
+      <div class="field"><label>Observações</label><textarea id="f-obs" placeholder="Ex: Caso necessite de tubulação adicional, novo orçamento será gerado." oninput="prev()"></textarea></div>
+    </div>
+
+    <button class="btn-prev" onclick="prev()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
+      Atualizar prévia
+    </button>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-panel">
+    <div class="prev-bar">
+      <span class="prev-bar-title">📄 Prévia em tempo real</span>
+      <div class="act-btns">
+        <button class="btn-act mail" onclick="envEmail()">✉️ E-mail</button>
+        <button class="btn-act wpp" onclick="envWpp()">💬 WhatsApp</button>
+        <button class="btn-act pdf" onclick="envPdf()">🖨️ Salvar PDF</button>
+      </div>
+    </div>
+    <div class="prev-scroll">
+      <div id="p-empty" class="prev-empty">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <div style="font-size:13px;font-weight:600;">Adicione itens para ver o orçamento</div>
+        <div style="font-size:11px;">Atualiza em tempo real</div>
+      </div>
+      <div id="p-doc" style="display:none;"></div>
     </div>
   </div>
 </div>
 
 <script>
-const EXEMPLOS = {
-  rede:`03 pontos de rede\n03 ramais\n03 aparelhos telefones IP\n100 m cabo CI\n60 m cat5\n03 RJ11\n03 RJ45\n06 keystone\nMão de obra instalação`,
-  cameras:`01 DVR Multihd 8 câmeras Intelbras\n01 HD 1TB\n06 câmeras Multihd bullet 20m Intelbras\n06 fonte P4\n06 ballon\n01 fonte alimentação 5A\n150 m cabo cat5\n01 rack vertical\n09 tubos galvanizados 3/4\n13 caixas de passagem\nMão de obra completa`,
-  acesso:`05 leitoras faciais 3532 MF W\n06 botoeiras de aproximação\n04 fontes ininterruptas\n04 eletroimãs para porta de vidro\n05 suportes para leitora\n04 molas para porta de vidro\n150 m cabo de rede\n05 tubos galvanizados 3/4\n06 caixas de passagem`,
-  telefonia:`01 central PABX Intelbras 8 ramais\n08 aparelhos internos\n24 tags\n80 m cabo telefônico\n04 caixas de passagem\nMão de obra e configuração`
-};
+let itens=[],ctr=0,_num=gNum(),_cls=[],_act=null;
 
-// Detecta retorno OAuth
+// ── CONTA AZUL ──────────────────────
 (function(){
-  const p = new URLSearchParams(location.search);
-  if(p.get('ca_connected')){
-    const b = document.getElementById('ca-banner');
-    b.className = 'ca-banner conectado';
-    b.innerHTML = '<div>✅ <strong>Conta Azul conectado</strong> — busca de clientes ativa</div>';
-    history.replaceState({},'','/');
-  }
-  if(p.get('ca_error')){
-    document.getElementById('ca-banner').innerHTML += `<span style="color:var(--atx-red);font-size:12px;margin-left:12px;">Erro: ${p.get('ca_error')}</span>`;
-    history.replaceState({},'','/');
-  }
+  const p=new URLSearchParams(location.search);
+  if(p.get('ca_connected')){setCA(true);history.replaceState({},'','/');}
 })();
-
+function setCA(on){
+  const b=document.getElementById('ca-bar');
+  b.className='ca-bar '+(on?'on':'off');
+  b.innerHTML=on?'<div>✅ <strong>Conta Azul conectado</strong> — busca ativa</div>':'<div><strong>Conta Azul</strong> — conecte para buscar clientes</div><button class="ca-bar-btn" onclick="conectarCA()">🔗 Conectar</button>';
+}
 function conectarCA(){
   const id='4n0rgm72a203713eqqhlkvo946';
   const uri=encodeURIComponent('https://atx-orcamentos.vercel.app/api/callback');
   const sc=encodeURIComponent('openid profile aws.cognito.signin.user.admin');
   location.href=`https://auth.contaazul.com/oauth2/authorize?response_type=code&client_id=${id}&redirect_uri=${uri}&state=atx&scope=${sc}`;
 }
-
-function ex(t){ document.getElementById('itens-input').value=EXEMPLOS[t]; }
-
-let _timer=null, _clientes=[];
+let _at2=null;
 function buscarCliente(q){
-  clearTimeout(_timer);
-  const lista=document.getElementById('ac-list');
-  if(q.length<2){lista.style.display='none';return;}
-  _timer=setTimeout(async()=>{
-    lista.innerHTML='<div class="autocomplete-msg">Buscando no Conta Azul...</div>';
-    lista.style.display='block';
+  clearTimeout(_at2);
+  const l=document.getElementById('ac-list');
+  if(q.length<2){l.style.display='none';return;}
+  _at2=setTimeout(async()=>{
+    l.innerHTML='<div class="ac-msg">Buscando...</div>';l.style.display='block';
     try{
       const r=await fetch(`/api/clientes?q=${encodeURIComponent(q)}`);
       const d=await r.json();
-      if(d.error==='nao_conectado'){lista.innerHTML='<div class="autocomplete-msg">⚠ Conecte o Conta Azul primeiro</div>';return;}
-      if(!d.clientes||!d.clientes.length){lista.innerHTML='<div class="autocomplete-msg">Nenhum cliente encontrado</div>';return;}
-      _clientes=d.clientes;
-      lista.innerHTML=d.clientes.map((c,i)=>`
-        <div class="autocomplete-item" onclick="selecionarCliente(${i})">
-          <div class="autocomplete-nome">${c.nome}</div>
-          <div class="autocomplete-detalhe">${c.endereco||c.email||c.documento||''}</div>
-        </div>`).join('');
-    }catch(e){lista.innerHTML='<div class="autocomplete-msg">Erro ao buscar</div>';}
+      if(d.error==='nao_conectado'){l.innerHTML='<div class="ac-msg">⚠ Conecte o Conta Azul primeiro</div>';return;}
+      if(!d.clientes||!d.clientes.length){l.innerHTML='<div class="ac-msg">Nenhum cliente encontrado</div>';return;}
+      _cls=d.clientes;
+      l.innerHTML=d.clientes.map((c,i)=>`<div class="ac-item" onclick="selCli(${i})"><div class="ac-nome">${c.nome}</div><div class="ac-det">${c.endereco||c.email||''}</div></div>`).join('');
+    }catch(e){l.innerHTML='<div class="ac-msg">Erro ao buscar</div>';}
   },400);
 }
-
-function selecionarCliente(i){
-  const c=_clientes[i];
-  document.getElementById('cliente-nome').value=c.nome;
-  document.getElementById('cliente-end').value=c.endereco||'';
-  document.getElementById('cliente-att').value=c.contato||'';
-  document.getElementById('cliente-email').value=c.email||'';
-  document.getElementById('cliente-tel').value=c.telefone||'';
+function selCli(i){
+  const c=_cls[i];
+  document.getElementById('f-cli').value=c.nome;
+  document.getElementById('f-end').value=c.endereco||'';
+  document.getElementById('f-att').value=c.contato||'';
   document.getElementById('ac-list').style.display='none';
   document.getElementById('ca-badge').style.display='block';
+  prev();
 }
-
 document.addEventListener('click',e=>{if(!e.target.closest('.input-wrap'))document.getElementById('ac-list').style.display='none';});
 
-function numOrc(){const d=new Date();return`ATX-${d.getFullYear().toString().slice(-2)}${String(d.getMonth()+1).padStart(2,'0')}-${String(Math.floor(Math.random()*900)+100)}`;}
-function dataHoje(){const d=new Date(),m=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];return`Santo André, ${d.getDate()} de ${m[d.getMonth()]} de ${d.getFullYear()}.`;}
-
-function stStatus(t,msg){
-  document.getElementById('st-load').className='status'+(t==='loading'?' show loading':'');
-  document.getElementById('st-err').className='status'+(t==='error'?' show error':'');
-  if(msg)document.getElementById('err-txt').textContent=msg;
+// ── ITENS ────────────────────────────
+function chip(d,u,q,p){document.getElementById('ni-d').value=d;document.getElementById('ni-u').value=u;document.getElementById('ni-q').value=q;document.getElementById('ni-p').value=p;add();}
+function add(){
+  const d=document.getElementById('ni-d').value.trim();
+  if(!d){document.getElementById('ni-d').focus();return;}
+  const q=parseFloat(document.getElementById('ni-q').value)||1;
+  const u=document.getElementById('ni-u').value;
+  const p=parseFloat(document.getElementById('ni-p').value)||0;
+  ctr++;itens.push({id:ctr,d,q,u,p,s:q*p});
+  document.getElementById('ni-d').value='';
+  document.getElementById('ni-q').value='1';
+  document.getElementById('ni-p').value='0';
+  document.getElementById('ni-d').focus();
+  renderList();prev();
+}
+function del(id){itens=itens.filter(i=>i.id!==id);renderList();prev();}
+function renderList(){
+  const w=document.getElementById('items-wrap');
+  const e=document.getElementById('items-empty');
+  const tc=document.getElementById('tot-card');
+  if(!itens.length){w.innerHTML='';w.appendChild(e);e.style.display='block';tc.style.display='none';return;}
+  e.style.display='none';
+  w.innerHTML=itens.map((it,i)=>`
+    <div class="item-row">
+      <div class="item-desc">${String(i+1).padStart(2,'0')}. ${it.d}</div>
+      <div class="item-qty">${it.q} ${it.u}</div>
+      <div class="item-uv">${it.p>0?R(it.p):'—'}</div>
+      <div class="item-sv">${it.s>0?R(it.s):'—'}</div>
+      <button class="btn-del" onclick="del(${it.id})">×</button>
+    </div>`).join('');
+  const mat=itens.filter(i=>!i.d.toLowerCase().includes('mão de obra'));
+  const mo=itens.filter(i=>i.d.toLowerCase().includes('mão de obra'));
+  const tm=mat.reduce((s,i)=>s+i.s,0),tmo=mo.reduce((s,i)=>s+i.s,0);
+  document.getElementById('t-mat').textContent=R(tm);
+  document.getElementById('t-mo').textContent=R(tmo);
+  document.getElementById('t-tot').textContent=R(tm+tmo);
+  tc.style.display='block';
 }
 
-async function gerarOrcamento(){
-  const cliente=document.getElementById('cliente-nome').value.trim();
-  const itens=document.getElementById('itens-input').value.trim();
-  if(!cliente){alert('Preencha o nome do cliente.');return;}
-  if(!itens){alert('Informe os itens do técnico.');return;}
-  const meta={
-    cliente, itens,
-    endereco:document.getElementById('cliente-end').value.trim()||'A definir',
-    att:document.getElementById('cliente-att').value.trim(),
-    email:document.getElementById('cliente-email').value.trim(),
-    ref:document.getElementById('cliente-ref').value.trim()||'Solução Corporativa',
-    pagamento:document.getElementById('pagamento').value,
-    prazo:document.getElementById('prazo').value.trim()||'A combinar',
-    validade:document.getElementById('validade').value.trim()||'15 dias',
-    obs:document.getElementById('obs').value.trim()
-  };
-  stStatus('loading');
-  document.querySelector('.btn-generate').disabled=true;
-  const prompt=`Você é o sistema de orçamentos da ATX Telecom, empresa de tecnologia e segurança eletrônica de Santo André, SP.
+// ── HELPERS ──────────────────────────
+function R(v){return'R$ '+Number(v).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+function gNum(){const d=new Date();return`ATX-${d.getFullYear().toString().slice(-2)}${String(d.getMonth()+1).padStart(2,'0')}-${String(Math.floor(Math.random()*900)+100)}`;}
+function dHoje(){const d=new Date(),m=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];return`Santo André, ${d.getDate()} de ${m[d.getMonth()]} de ${d.getFullYear()}.`;}
 
-O técnico fez o levantamento a seguir para o cliente "${cliente}":
----
-${itens}
----
+// ── PREVIEW ──────────────────────────
+function prev(){
+  if(!itens.length){document.getElementById('p-empty').style.display='flex';document.getElementById('p-doc').style.display='none';return;}
+  const cli=document.getElementById('f-cli').value.trim()||'Cliente';
+  const att=document.getElementById('f-att').value.trim();
+  const ref=document.getElementById('f-ref').value.trim()||'Solução Corporativa';
+  const end=document.getElementById('f-end').value.trim()||'A definir';
+  const pmat=document.getElementById('f-pmat').value;
+  const pmo=document.getElementById('f-pmo').value;
+  const prazo=document.getElementById('f-prazo').value.trim()||'A combinar';
+  const val=document.getElementById('f-val').value.trim()||'15 dias';
+  const obs=document.getElementById('f-obs').value.trim();
 
-Gere um orçamento estruturado em JSON com esta estrutura exata:
-{"secoes":[{"titulo":"Nome da seção","itens":[{"item":"1.01","qtd":1,"unid":"pç","descricao":"Descrição do produto","unitario":0,"subtotal":0}],"total_secao":0}],"total_geral":0,"observacoes":""}
+  const mat=itens.filter(i=>!i.d.toLowerCase().includes('mão de obra'));
+  const mo=itens.filter(i=>i.d.toLowerCase().includes('mão de obra'));
+  const tm=mat.reduce((s,i)=>s+i.s,0),tmo=mo.reduce((s,i)=>s+i.s,0),tt=tm+tmo;
 
-Regras:
-- Agrupe em seções lógicas (equipamentos, infraestrutura, mão de obra)
-- Normalize nomes: "cat5"→"Cabo Cat5e", "rj45"→"Conector RJ45"
-- Unidades: pç, m, br, vb
-- Deixe unitario/subtotal como 0 quando não informado
-- Mão de obra em seção própria, máximo 45 chars na descrição
-- Retorne APENAS o JSON válido, sem markdown`;
-  try{
-    const r=await fetch('/api/gerar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
-    const d=await r.json();
-    if(d.error)throw new Error(d.error);
-    const json=JSON.parse(d.resultado.replace(/```json|```/g,'').trim());
-    renderOrc(json,meta);
-    stStatus('');
-    document.getElementById('placeholder-area').style.display='none';
-    document.getElementById('preview-area').style.display='block';
-  }catch(e){stStatus('error','Erro: '+e.message);}
-  document.querySelector('.btn-generate').disabled=false;
-}
-
-function renderOrc(data,meta){
-  const n=numOrc();
-  let secs='';
-  data.secoes.forEach(sec=>{
-    const rows=sec.itens.map(it=>`<tr>
-      <td style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;">${it.item}</td>
-      <td style="font-weight:500;">${it.qtd}</td><td style="color:var(--muted);">${it.unid}</td>
-      <td>${it.descricao}</td>
-      <td>${it.unitario?'R$ '+Number(it.unitario).toFixed(2).replace('.',','):'—'}</td>
-      <td>${it.subtotal?'R$ '+Number(it.subtotal).toFixed(2).replace('.',','):'—'}</td>
+  const icons={'Materiais':'📦','Mão de Obra':'🔨'};
+  const sec=(titulo,lista,nb)=>{
+    if(!lista.length)return'';
+    const rows=lista.map((it,i)=>`<tr>
+      <td><span class="inum">${nb}.${String(i+1).padStart(2,'0')}</span></td>
+      <td class="c">${it.q}</td><td class="c">${it.u}</td>
+      <td class="b">${it.d}</td>
+      <td class="r">${it.p>0?R(it.p):'—'}</td>
+      <td class="r b">${it.s>0?R(it.s):'—'}</td>
     </tr>`).join('');
-    const foot=sec.total_secao>0?`<tfoot><tr><td colspan="5" style="text-align:right;color:var(--muted);font-size:11px;">Total da seção</td><td>R$ ${Number(sec.total_secao).toFixed(2).replace('.',',')}</td></tr></tfoot>`:'';
-    secs+=`<div class="orc-section-title">${sec.titulo}</div>
-      <table class="items"><thead><tr>
-        <th style="width:52px">Item</th><th style="width:40px">Qt.</th>
-        <th style="width:44px">Und.</th><th>Descrição</th>
-        <th style="width:80px">Unitário</th><th style="width:80px">Subtotal</th>
-      </tr></thead><tbody>${rows}</tbody>${foot}</table>`;
-  });
-  const total=data.total_geral>0
-    ?`<div style="text-align:right;font-size:16px;font-weight:700;color:var(--atx-blue);margin-top:16px;padding-top:12px;border-top:2px solid var(--atx-blue);">Total Geral: R$ ${Number(data.total_geral).toFixed(2).replace('.',',')}</div>`
-    :`<div style="text-align:right;font-size:12px;color:var(--muted);margin-top:12px;font-style:italic;">* Valores unitários a serem definidos conforme cotação.</div>`;
-  document.getElementById('orc-preview').innerHTML=`
-  <div class="orcamento" id="orc-print">
-    <div class="orc-header">
-      <div>
-        <div class="orc-logo">AT<span>X</span></div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;letter-spacing:1px;">TELECOM & SEGURANÇA ELETRÔNICA</div>
-        <div class="orc-num" style="margin-top:10px;">${n}</div>
+    const sub=lista.reduce((s,i)=>s+i.s,0);
+    return`<div class="orc-sec">
+      <div class="orc-sec-hd">
+        <span class="orc-sec-ico">${icons[titulo]||'📋'}</span>
+        <span class="orc-sec-title">${nb} — ${titulo}</span>
+        <span class="orc-sec-badge">${lista.length} ${lista.length===1?'item':'itens'}</span>
       </div>
-      <div class="orc-company-info"><strong>ATX Telecom Ltda.</strong><br>Santo André — SP<br>Tel.: (11) 4997-7000<br>Cel.: (11) 9 4018-5698<br>comercial@atxtelecom.com.br</div>
+      <table class="t"><thead><tr>
+        <th style="width:50px">Item</th><th class="c" style="width:38px">Qt.</th>
+        <th class="c" style="width:38px">Und.</th><th>Descrição</th>
+        <th class="r" style="width:86px">Unit.</th><th class="r" style="width:86px">Subtotal</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+      ${sub>0?`<div class="sec-sub">Subtotal: ${R(sub)}</div>`:''}
+    </div>`;
+  };
+
+  document.getElementById('p-doc').innerHTML=`
+  <div class="orc" id="orc-print">
+    <div class="orc-hero">
+      <div class="orc-hero-top">
+        <div class="orc-brand-area">
+          <div class="orc-logo-box">
+            <div class="orc-logo-atx">ATX</div>
+            <div class="orc-logo-tel">Telecom</div>
+          </div>
+          <div class="orc-tagline-block">
+            <div class="orc-tagline">Conectando sua empresa ao <em>futuro</em></div>
+            <div class="orc-sub-tagline">PABX · VoIP · CFTV · Automação · Controle de Acesso</div>
+          </div>
+        </div>
+        <div class="orc-contact-area">
+          <p><strong>ATX Telecom Ltda. · Santo André — SP</strong></p>
+          <p>(11) 4997-7000 · (11) 9 4018-5698</p>
+          <p><a href="mailto:comercial@atxtelecom.com.br">comercial@atxtelecom.com.br</a></p>
+          <p><a href="https://www.atxtelecom.com.br">www.atxtelecom.com.br</a></p>
+        </div>
+      </div>
+      <div class="orc-stripe">
+        <span class="orc-stripe-num">PROPOSTA COMERCIAL · Nº ${_num}</span>
+        <div class="orc-stripe-tags">
+          <span class="orc-stripe-tag">Redução de custos</span>
+          <span class="orc-stripe-tag">Suporte técnico ágil</span>
+          <span class="orc-stripe-tag">Equipamentos de ponta</span>
+        </div>
+      </div>
     </div>
+
     <div class="orc-body">
       <div class="orc-meta">
-        <div class="orc-meta-block"><label>Data</label><p>${dataHoje()}</p></div>
-        <div class="orc-meta-block"><label>Referência</label><p>${meta.ref}</p></div>
-        <div class="orc-meta-block"><label>Cliente</label><p>${meta.cliente}${meta.att?'<br>Att.: '+meta.att:''}</p></div>
-        <div class="orc-meta-block"><label>Endereço</label><p>${meta.endereco}</p></div>
+        <div class="orc-mc"><label>Data</label><p>${dHoje()}</p></div>
+        <div class="orc-mc"><label>Referente a</label><p>${ref}</p></div>
+        <div class="orc-mc"><label>Cliente</label><p>${cli}${att?`<br><span class="sp">Att.: ${att}</span>`:''}</p></div>
+        <div class="orc-mc"><label>Endereço</label><p>${end}</p></div>
       </div>
-      <div class="orc-intro">A <strong>ATX</strong> é uma empresa provedora de Soluções de alta Tecnologia, propiciando aos nossos clientes acesso a estas com a maior qualidade e a um preço extremamente competitivo. Atuando no mercado desde 1968, aliada a fabricantes de renomadas marcas como Intelbras, apresentamos nossa proposta comercial abaixo.</div>
-      ${secs}${total}
-      ${meta.obs?`<div style="margin-top:12px;padding:10px 14px;background:#FFFBEA;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;font-size:12px;color:#78350F;">${meta.obs}</div>`:''}
-      <div class="orc-pagamento"><div><strong>Condições de pagamento:</strong> ${meta.pagamento}</div><div><strong>Prazo de execução:</strong> ${meta.prazo}</div></div>
+
+      ${sec('Materiais',mat,1)}
+      ${sec('Mão de Obra',mo,2)}
+
+      <div class="orc-total">
+        ${(tm>0||tmo>0)?`<div class="orc-total-inner">
+          ${tm>0?`<div class="orc-tr"><span>Subtotal materiais</span><span>${R(tm)}</span></div>`:''}
+          ${tmo>0?`<div class="orc-tr"><span>Mão de obra</span><span>${R(tmo)}</span></div>`:''}
+        </div>`:''}
+        <div class="orc-total-grand">
+          <span class="label">Valor Total da Proposta</span>
+          <span class="value">${R(tt)}</span>
+        </div>
+      </div>
+
+      ${obs?`<div class="orc-obs">⚠️ <strong>Observação:</strong> ${obs}</div>`:''}
+
+      <div class="orc-pgto">
+        <div class="orc-pgto-item"><label>Materiais</label><p>${pmat}</p></div>
+        <div class="orc-pgto-item"><label>Mão de obra</label><p>${pmo}</p></div>
+        <div class="orc-pgto-item"><label>Prazo / Execução</label><p>${prazo}</p></div>
+      </div>
     </div>
-    <div class="orc-validade">Proposta válida por ${meta.validade} a partir da data de emissão · ${n}</div>
-    <div class="orc-footer">ATX Telecom · Santo André, SP · (11) 4997-7000 · comercial@atxtelecom.com.br</div>
+
+    <div class="orc-footer">
+      <div class="orc-footer-brand">
+        <div class="orc-footer-logo">
+          <div class="fatx">ATX</div>
+          <div class="ftel">Telecom</div>
+        </div>
+        <div class="orc-footer-slogan">Conectando sua empresa ao futuro</div>
+      </div>
+      <div class="orc-footer-contacts">
+        (11) 4997-7000 · (11) 9 4018-5698<br>
+        <a href="mailto:comercial@atxtelecom.com.br">comercial@atxtelecom.com.br</a> · <a href="https://www.atxtelecom.com.br">www.atxtelecom.com.br</a>
+      </div>
+    </div>
+    <div class="orc-validade">Proposta válida por ${val} a partir da data de emissão · ${_num}</div>
   </div>`;
+
+  document.getElementById('p-empty').style.display='none';
+  document.getElementById('p-doc').style.display='block';
 }
 
-function imprimir(){
-  const c=document.getElementById('orc-print').outerHTML;
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;font-size:12px;color:#0D1B3E;}.orcamento{max-width:800px;margin:0 auto;}.orc-header{background:#0A2463;color:white;padding:20px 24px;display:flex;justify-content:space-between;}.orc-logo{font-family:'DM Serif Display',serif;font-size:24px;letter-spacing:3px;}.orc-logo span{color:#1E90FF;}.orc-company-info{font-size:10px;color:rgba(255,255,255,0.65);line-height:1.8;text-align:right;}.orc-company-info strong{color:white;}.orc-num{display:inline-block;background:#1E90FF;color:white;font-size:10px;font-weight:600;padding:2px 10px;border-radius:20px;margin-top:8px;}.orc-body{padding:20px 24px;}.orc-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #D0D9EF;}.orc-meta-block label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#6B7A9B;}.orc-meta-block p{font-size:12px;font-weight:500;}.orc-intro{background:#E8F0FE;border-left:3px solid #1E90FF;padding:10px 14px;font-size:11px;color:#2A3F6B;line-height:1.6;margin-bottom:16px;}.orc-section-title{font-size:11px;font-weight:700;text-transform:uppercase;color:#0A2463;background:#EEF3FC;padding:6px 10px;border-radius:4px;margin:12px 0 6px;}table.items{width:100%;border-collapse:collapse;font-size:11px;}table.items thead tr{background:#0A2463;color:white;}table.items thead th{padding:6px 8px;text-align:left;font-weight:500;font-size:10px;text-transform:uppercase;}table.items thead th:last-child,table.items thead th:nth-last-child(2){text-align:right;}table.items tbody tr{border-bottom:1px solid #EEF1F8;}table.items tbody tr:nth-child(even){background:#F8FAFF;}table.items tbody td{padding:6px 8px;}table.items tbody td:last-child,table.items tbody td:nth-last-child(2){text-align:right;font-family:'JetBrains Mono',monospace;font-size:10px;}.orc-pagamento{margin-top:16px;padding-top:12px;border-top:1px solid #D0D9EF;display:flex;justify-content:space-between;font-size:11px;color:#6B7A9B;}.orc-pagamento strong{color:#0D1B3E;}.orc-validade{text-align:center;font-size:10px;color:#6B7A9B;padding:10px;border-top:1px dashed #D0D9EF;margin-top:14px;}.orc-footer{background:#0A2463;color:rgba(255,255,255,0.6);padding:10px 24px;font-size:10px;text-align:center;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>${c}</body></html>`);
-  w.document.close();setTimeout(()=>w.print(),600);
-}
-
-function copiar(){
+// ── PDF ──────────────────────────────
+function envPdf(){
   const el=document.getElementById('orc-print');
-  navigator.clipboard.writeText(el?el.innerText:'').then(()=>alert('Copiado!'));
+  if(!el){alert('Adicione itens primeiro.');return;}
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#1A1F5E;font-size:11px;}
+    .orc{max-width:740px;margin:0 auto;}.orc-hero{background:#1A1F5E;}
+    .orc-hero-top{padding:20px 26px 0;display:flex;justify-content:space-between;align-items:center;}
+    .orc-brand-area{display:flex;align-items:center;gap:14px;}
+    .orc-logo-box{background:#fff;border-radius:8px;padding:6px 12px;}.orc-logo-atx{font-size:18px;font-weight:800;color:#1A1F5E;letter-spacing:1px;line-height:1;}.orc-logo-tel{font-size:8px;font-weight:800;color:#3DBE5A;letter-spacing:2.5px;text-transform:uppercase;}
+    .orc-tagline-block{}.orc-tagline{font-size:10px;font-weight:700;color:#fff;}.orc-tagline em{color:#3DBE5A;font-style:normal;}.orc-sub-tagline{font-size:8px;color:rgba(255,255,255,.45);letter-spacing:1px;margin-top:1px;text-transform:uppercase;}
+    .orc-contact-area{text-align:right;}.orc-contact-area p{font-size:9px;color:rgba(255,255,255,.6);line-height:1.9;}.orc-contact-area strong{color:#fff;font-size:9.5px;}.orc-contact-area a{color:#3DBE5A;text-decoration:none;}
+    .orc-stripe{background:#3DBE5A;padding:7px 26px;display:flex;align-items:center;justify-content:space-between;margin-top:14px;}
+    .orc-stripe-num{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#1A1F5E;letter-spacing:1px;}
+    .orc-stripe-tags{display:flex;gap:5px;}.orc-stripe-tag{background:rgba(26,31,94,.15);color:#1A1F5E;font-size:7px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.5px;}
+    .orc-body{padding:18px 26px;}
+    .orc-meta{display:grid;grid-template-columns:1fr 1fr;border:1px solid #E0E7F3;border-radius:8px;overflow:hidden;margin-bottom:14px;}
+    .orc-mc{padding:9px 12px;background:#FAFBFE;border-right:1px solid #E0E7F3;}.orc-mc:nth-child(2){border-right:none;}.orc-mc:nth-child(3),.orc-mc:nth-child(4){border-top:1px solid #E0E7F3;}.orc-mc:nth-child(4){border-right:none;}
+    .orc-mc label{font-size:7px;text-transform:uppercase;letter-spacing:1px;color:#6B7A9E;font-weight:700;display:block;margin-bottom:2px;}.orc-mc p{font-size:11px;font-weight:700;line-height:1.4;}.orc-mc .sp{font-size:9px;font-weight:400;color:#6B7A9E;}
+    .orc-sec{margin-bottom:12px;}.orc-sec-hd{display:flex;align-items:center;gap:7px;padding:5px 10px;background:#F0F4FF;border-left:3px solid #3DBE5A;border-radius:0 5px 5px 0;margin-bottom:6px;}
+    .orc-sec-ico{font-size:12px;}.orc-sec-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#1A1F5E;}.orc-sec-badge{margin-left:auto;background:#3DBE5A;color:#fff;font-size:7px;font-weight:700;padding:1px 6px;border-radius:8px;}
+    table.t{width:100%;border-collapse:collapse;font-size:10px;}table.t thead tr{background:#1A1F5E;}table.t thead th{padding:5px 8px;text-align:left;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.8);}table.t thead th.c{text-align:center;}table.t thead th.r{text-align:right;}table.t tbody tr{border-bottom:1px solid #EEF1F8;}table.t tbody tr:nth-child(even){background:#F7FAFF;}table.t tbody td{padding:6px 8px;}table.t tbody td.c{text-align:center;color:#6B7A9E;}table.t tbody td.r{text-align:right;font-family:'JetBrains Mono',monospace;}table.t tbody td.b{font-weight:700;}.inum{font-family:'JetBrains Mono',monospace;font-size:8px;color:#6B7A9E;background:#F2F5FB;padding:1px 4px;border-radius:3px;}.sec-sub{text-align:right;font-size:9px;color:#6B7A9E;margin-top:3px;font-family:'JetBrains Mono',monospace;}
+    .orc-total{margin-top:14px;border-radius:9px;overflow:hidden;border:1px solid #E0E7F3;}.orc-total-inner{padding:9px 14px;background:#FAFBFE;}.orc-tr{display:flex;justify-content:space-between;font-size:10px;color:#6B7A9E;padding:2px 0;}.orc-tr span:last-child{font-family:'JetBrains Mono',monospace;}
+    .orc-total-grand{background:#1A1F5E;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;}.orc-total-grand .label{font-size:11px;font-weight:700;color:rgba(255,255,255,.8);}.orc-total-grand .value{font-size:20px;font-weight:800;color:#3DBE5A;font-family:'JetBrains Mono',monospace;}
+    .orc-obs{margin-top:11px;padding:8px 11px;background:#FFFBEA;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;font-size:10px;color:#78350F;line-height:1.6;}
+    .orc-pgto{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px;}.orc-pgto-item{background:#F0F4FF;border-radius:7px;padding:7px 10px;border:1px solid #d0dcf5;}.orc-pgto-item label{font-size:7px;text-transform:uppercase;letter-spacing:1px;color:#1A1F5E;font-weight:800;display:block;margin-bottom:2px;}.orc-pgto-item p{font-size:10px;font-weight:700;color:#1A1F5E;}
+    .orc-footer{background:#1A1F5E;padding:11px 26px;display:flex;align-items:center;justify-content:space-between;margin-top:14px;}.orc-footer-brand{display:flex;align-items:center;gap:10px;}.orc-footer-logo{background:rgba(255,255,255,.12);border-radius:5px;padding:3px 8px;}.fatx{font-size:12px;font-weight:800;color:#fff;letter-spacing:1px;}.ftel{font-size:6px;font-weight:800;color:#3DBE5A;letter-spacing:2px;}.orc-footer-slogan{font-size:8px;color:rgba(255,255,255,.4);letter-spacing:.5px;}
+    .orc-footer-contacts{text-align:right;font-size:8.5px;color:rgba(255,255,255,.55);line-height:1.9;}.orc-footer-contacts a{color:#3DBE5A;text-decoration:none;}
+    .orc-validade{background:#141850;text-align:center;padding:5px 26px 8px;font-size:8px;color:rgba(255,255,255,.35);border-top:1px solid rgba(255,255,255,.06);}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+  </style></head><body>${el.outerHTML}</body></html>`);
+  w.document.close();setTimeout(()=>w.print(),700);
+}
+
+function envWpp(){
+  const cli=document.getElementById('f-cli').value.trim()||'cliente';
+  const tt=itens.reduce((s,i)=>s+i.s,0);
+  const linhas=itens.map((it,i)=>`${i+1}. ${it.d} (${it.q} ${it.u})${it.s>0?' — '+R(it.s):''}`).join('\n');
+  const msg=`*ATX Telecom — Proposta Comercial*\n*Nº ${_num}*\n\nCliente: *${cli}*\n\n${linhas}\n\n*Total: ${R(tt)}*\n\nPgto materiais: ${document.getElementById('f-pmat').value}\nPgto mão de obra: ${document.getElementById('f-pmo').value}\nValidade: ${document.getElementById('f-val').value||'15 dias'}\n\n_ATX Telecom · (11) 4997-7000_\n_www.atxtelecom.com.br_`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function envEmail(){
+  const cli=document.getElementById('f-cli').value.trim()||'cliente';
+  const tt=itens.reduce((s,i)=>s+i.s,0);
+  const linhas=itens.map((it,i)=>`${i+1}. ${it.d} (${it.q} ${it.u})${it.s>0?' - '+R(it.s):''}`).join('\n');
+  const sub=encodeURIComponent(`Proposta Comercial ATX Telecom — ${_num}`);
+  const body=encodeURIComponent(`Prezado(a) ${cli},\n\nSegue nossa proposta comercial conforme solicitado.\n\n${linhas}\n\nValor Total: ${R(tt)}\nPgto materiais: ${document.getElementById('f-pmat').value}\nPgto mão de obra: ${document.getElementById('f-pmo').value}\nValidade: ${document.getElementById('f-val').value||'15 dias'}\n\nA ATX Telecom oferece soluções em PABX IP, VoIP, CFTV, Controle de Acesso e Automação.\n\nAtenciosamente,\nATX Telecom\n(11) 4997-7000 | comercial@atxtelecom.com.br\nwww.atxtelecom.com.br`);
+  window.location.href=`mailto:?subject=${sub}&body=${body}`;
 }
 </script>
 </body>
 </html>
-
