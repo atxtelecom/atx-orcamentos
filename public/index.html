@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATX Telecom — Gerador de Orçamentos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --atx-blue: #0A2463;
+    --atx-accent: #1E90FF;
+    --atx-light: #E8F0FE;
+    --atx-green: #00875A;
+    --atx-red: #C0392B;
+    --bg: #F4F6FB;
+    --card: #FFFFFF;
+    --border: #D0D9EF;
+    --text: #0D1B3E;
+    --muted: #6B7A9B;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: var(--atx-blue);
+    color: white;
+    padding: 0 40px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(10,36,99,0.3);
+  }
+  .header-logo { font-family: 'DM Serif Display', serif; font-size: 22px; letter-spacing: 2px; }
+  .header-logo span { color: var(--atx-accent); }
+  .header-sub { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 300; letter-spacing: 1px; text-transform: uppercase; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 36px 24px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1.1fr; gap: 28px; align-items: start; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; box-shadow: 0 1px 4px rgba(10,36,99,0.06); }
+  .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--atx-accent); margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+  .card-title::before { content: ''; display: block; width: 3px; height: 14px; background: var(--atx-accent); border-radius: 2px; }
+
+  .form-row { margin-bottom: 16px; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  input, textarea, select { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); background: #FAFBFD; transition: border-color 0.2s, box-shadow 0.2s; outline: none; }
+  input:focus, textarea:focus, select:focus { border-color: var(--atx-accent); box-shadow: 0 0 0 3px rgba(30,144,255,0.1); background: white; }
+  textarea { resize: vertical; min-height: 120px; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  .hint { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .hint strong { color: var(--atx-blue); }
+
+  .btn-generate { width: 100%; padding: 14px; background: var(--atx-blue); color: white; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; letter-spacing: 0.5px; transition: background 0.2s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .btn-generate:hover { background: #0D2E80; }
+  .btn-generate:active { transform: scale(0.99); }
+  .btn-generate:disabled { background: var(--muted); cursor: not-allowed; }
+
+  .btn-secondary { padding: 10px 20px; background: var(--atx-light); color: var(--atx-blue); border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .btn-secondary:hover { background: #d0e4fc; }
+
+  .status { display: none; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-top: 12px; }
+  .status.show { display: flex; }
+  .status.loading { background: var(--atx-light); color: var(--atx-blue); }
+  .status.error { background: #FDECEA; color: var(--atx-red); }
+
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(30,144,255,0.3); border-top-color: var(--atx-accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .orcamento { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; font-size: 13px; }
+  .orc-header { background: var(--atx-blue); color: white; padding: 24px 28px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .orc-logo { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: 3px; }
+  .orc-logo span { color: var(--atx-accent); }
+  .orc-company-info { font-size: 11px; color: rgba(255,255,255,0.65); line-height: 1.8; text-align: right; }
+  .orc-company-info strong { color: white; font-size: 12px; }
+  .orc-body { padding: 24px 28px; }
+  .orc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .orc-meta-block label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .orc-meta-block p { font-size: 13px; font-weight: 500; color: var(--text); margin-top: 2px; }
+  .orc-intro { background: var(--atx-light); border-left: 3px solid var(--atx-accent); border-radius: 0 6px 6px 0; padding: 14px 16px; font-size: 12px; color: #2A3F6B; line-height: 1.7; margin-bottom: 20px; }
+  .orc-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--atx-blue); background: #EEF3FC; padding: 8px 12px; border-radius: 6px; margin: 16px 0 8px; }
+  table.items { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.items thead tr { background: var(--atx-blue); color: white; }
+  table.items thead th { padding: 8px 10px; text-align: left; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  table.items thead th:last-child, table.items thead th:nth-last-child(2) { text-align: right; }
+  table.items tbody tr { border-bottom: 1px solid #EEF1F8; }
+  table.items tbody tr:nth-child(even) { background: #F8FAFF; }
+  table.items tbody td { padding: 8px 10px; color: var(--text); }
+  table.items tbody td:last-child, table.items tbody td:nth-last-child(2) { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  table.items tfoot td { padding: 10px 10px; font-weight: 600; border-top: 2px solid var(--atx-blue); }
+  table.items tfoot td:last-child { text-align: right; color: var(--atx-blue); font-size: 14px; font-family: 'JetBrains Mono', monospace; }
+  .orc-pagamento { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); }
+  .orc-pagamento strong { color: var(--text); }
+  .orc-validade { text-align: center; font-size: 11px; color: var(--muted); padding: 12px; border-top: 1px dashed var(--border); margin-top: 16px; }
+  .orc-footer { background: var(--atx-blue); color: rgba(255,255,255,0.6); padding: 12px 28px; font-size: 11px; text-align: center; }
+  .preview-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+  .orc-num { display: inline-block; background: var(--atx-accent); color: white; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+
+  .exemplo-chip { display: inline-block; padding: 5px 12px; background: var(--atx-light); border: 1px solid var(--border); border-radius: 20px; font-size: 11px; color: var(--atx-blue); cursor: pointer; margin: 3px 2px; transition: background 0.15s; font-weight: 500; }
+  .exemplo-chip:hover { background: #d0e4fc; }
+
+  @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-logo">AT<span>X</span> TELECOM</div>
+    <div class="header-sub">Gerador de Orçamentos</div>
+  </div>
+  <div style="font-size:12px;color:rgba(255,255,255,0.5);">Santo André — SP</div>
+</header>
+
+<div class="container">
+  <div class="two-col">
+
+    <div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Dados do cliente</div>
+        <div class="form-row">
+          <label>Empresa / Cliente</label>
+          <input type="text" id="cliente-nome" placeholder="Ex: Condomínio Joanópolis">
+        </div>
+        <div class="form-row">
+          <label>Endereço</label>
+          <input type="text" id="cliente-end" placeholder="Ex: Rua Joanópolis, 254 — Santo André, SP">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label>Atenção (contato)</label>
+            <input type="text" id="cliente-att" placeholder="Ex: Rafael">
+          </div>
+          <div class="form-row">
+            <label>Referência / Tipo</label>
+            <input type="text" id="cliente-ref" placeholder="Ex: Segurança eletrônica">
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Itens levantados pelo técnico</div>
+        <div class="form-row">
+          <textarea id="itens-input" placeholder="Cole aqui exatamente como o técnico anotou:&#10;&#10;03 pontos rede&#10;03 ramal&#10;03 aparelhos telefones&#10;100 m cabo ci&#10;60 m cat 5&#10;03 rj11 / 03 rj45&#10;06 keystone"></textarea>
+          <div class="hint">A IA interpreta a anotação do técnico, identifica materiais e organiza em seções. <strong>Pode incluir mão de obra também.</strong></div>
+        </div>
+        <div style="margin-top:8px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Exemplos rápidos:</div>
+          <span class="exemplo-chip" onclick="preencherExemplo('rede')">📡 Rede</span>
+          <span class="exemplo-chip" onclick="preencherExemplo('cameras')">📷 Câmeras</span>
+          <span class="exemplo-chip" onclick="preencherExemplo('acesso')">🔑 Controle acesso</span>
+          <span class="exemplo-chip" onclick="preencherExemplo('telefonia')">📞 Telefonia</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Condições comerciais</div>
+        <div class="form-grid-3">
+          <div class="form-row">
+            <label>Pagamento</label>
+            <select id="pagamento">
+              <option>30/60/90 dias boleto</option>
+              <option>À vista</option>
+              <option>50% entrada + 50% entrega</option>
+              <option>30/60 dias boleto</option>
+              <option>Cartão parcelado</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Prazo execução</label>
+            <input type="text" id="prazo" placeholder="Ex: 5 dias úteis">
+          </div>
+          <div class="form-row">
+            <label>Validade proposta</label>
+            <input type="text" id="validade" placeholder="Ex: 15 dias" value="15 dias">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Observações adicionais (opcional)</label>
+          <input type="text" id="obs" placeholder="Ex: Inclui instalação. Material Intelbras homologado.">
+        </div>
+      </div>
+
+      <button class="btn-generate" onclick="gerarOrcamento()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Gerar Orçamento com IA
+      </button>
+
+      <div class="status loading" id="status-loading">
+        <div class="spinner"></div>
+        <span>Analisando itens e montando orçamento...</span>
+      </div>
+      <div class="status error" id="status-error">
+        <span>⚠</span>
+        <span id="error-text">Erro ao gerar orçamento.</span>
+      </div>
+    </div>
+
+    <div>
+      <div id="placeholder-area">
+        <div class="card" style="text-align:center;padding:48px 28px;border-style:dashed;">
+          <div style="font-size:40px;margin-bottom:12px;">📄</div>
+          <div style="font-weight:600;font-size:15px;color:var(--atx-blue);margin-bottom:6px;">O orçamento aparece aqui</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.6;">Preencha os dados do cliente e cole<br>os itens do técnico para começar.</div>
+        </div>
+      </div>
+
+      <div id="preview-area" style="display:none;">
+        <div class="card-title" style="margin-bottom:12px;">Prévia do orçamento</div>
+        <div id="orcamento-preview"></div>
+        <div class="preview-actions">
+          <button class="btn-secondary" onclick="copiarTexto()">📋 Copiar texto</button>
+          <button class="btn-secondary" onclick="imprimirOrcamento()">🖨️ Imprimir / Salvar PDF</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const EXEMPLOS = {
+  rede: `03 pontos de rede\n03 ramais\n03 aparelhos telefones IP\n100 m cabo CI\n60 m cat5\n03 RJ11\n03 RJ45\n06 keystone\nMão de obra instalação`,
+  cameras: `01 DVR Multihd 8 câmeras Intelbras\n01 HD 1TB\n06 câmeras Multihd bullet 20m Intelbras\n06 fonte P4\n06 ballon\n01 fonte alimentação 5A\n150 m cabo cat5\n01 rack vertical\n09 tubos galvanizados 3/4\n13 caixas de passagem\nMão de obra completa`,
+  acesso: `05 leitoras faciais 3532 MF W\n06 botoeiras de aproximação\n04 fontes ininterruptas\n04 eletroimãs para porta de vidro\n05 suportes para leitora\n04 molas para porta de vidro\n04 rabichos elétrica\n150 m cabo de rede\n05 tubos galvanizados 3/4\n06 caixas de passagem`,
+  telefonia: `01 central PABX Intelbras 8 ramais\n08 aparelhos internos\n24 tags\n80 m cabo telefônico\n04 caixas de passagem\nMão de obra e configuração`
+};
+
+function preencherExemplo(tipo) {
+  document.getElementById('itens-input').value = EXEMPLOS[tipo];
+}
+
+function gerarNumeroOrcamento() {
+  const d = new Date();
+  const ano = d.getFullYear().toString().slice(-2);
+  const mes = String(d.getMonth()+1).padStart(2,'0');
+  const seq = String(Math.floor(Math.random()*900)+100);
+  return `ATX-${ano}${mes}-${seq}`;
+}
+
+function formatarData() {
+  const d = new Date();
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  return `Santo André, ${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}.`;
+}
+
+function setStatus(tipo) {
+  document.getElementById('status-loading').className = 'status' + (tipo === 'loading' ? ' show loading' : '');
+  document.getElementById('status-error').className = 'status' + (tipo === 'error' ? ' show error' : '');
+}
+
+async function gerarOrcamento() {
+  const cliente = document.getElementById('cliente-nome').value.trim();
+  const itens = document.getElementById('itens-input').value.trim();
+  if (!cliente) { alert('Preencha o nome do cliente.'); return; }
+  if (!itens) { alert('Informe os itens levantados pelo técnico.'); return; }
+
+  const endereco = document.getElementById('cliente-end').value.trim() || 'A definir';
+  const att = document.getElementById('cliente-att').value.trim() || '';
+  const ref = document.getElementById('cliente-ref').value.trim() || 'Solução Corporativa';
+  const pagamento = document.getElementById('pagamento').value;
+  const prazo = document.getElementById('prazo').value.trim() || 'A combinar';
+  const validade = document.getElementById('validade').value.trim() || '15 dias';
+  const obs = document.getElementById('obs').value.trim();
+
+  setStatus('loading');
+  document.querySelector('.btn-generate').disabled = true;
+
+  const prompt = `Você é o sistema de orçamentos da ATX Telecom, empresa de tecnologia e segurança eletrônica de Santo André, SP.
+
+O técnico fez o levantamento a seguir para o cliente "${cliente}":
+---
+${itens}
+---
+
+Tarefa: gere um orçamento estruturado em JSON com esta estrutura exata:
+
+{
+  "secoes": [
+    {
+      "titulo": "Nome da seção (ex: Sistema de Câmeras)",
+      "itens": [
+        {
+          "item": "1.01",
+          "qtd": 1,
+          "unid": "pç",
+          "descricao": "Descrição completa do produto",
+          "unitario": 0,
+          "subtotal": 0
+        }
+      ],
+      "total_secao": 0
+    }
+  ],
+  "total_geral": 0,
+  "observacoes": ""
+}
+
+Regras:
+- Agrupe os itens em seções lógicas (equipamentos, infraestrutura, mão de obra)
+- Normalize os nomes: "cat5" → "Cabo Cat5e", "rj45" → "Conector RJ45"
+- Unidades: pç, m, br, vb (verba para serviços)
+- Deixe unitario e subtotal como 0 quando não informado
+- Mão de obra em seção própria
+- Descrições com no máximo 45 caracteres
+- Retorne APENAS o JSON válido, sem markdown`;
+
+  try {
+    const res = await fetch('/api/gerar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const clean = data.resultado.replace(/```json|```/g,'').trim();
+    const json = JSON.parse(clean);
+
+    renderizarOrcamento(json, { cliente, endereco, att, ref, pagamento, prazo, validade, obs });
+    setStatus('');
+    document.getElementById('placeholder-area').style.display = 'none';
+    document.getElementById('preview-area').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('error-text').textContent = 'Erro: ' + e.message;
+    setStatus('error');
+  }
+
+  document.querySelector('.btn-generate').disabled = false;
+}
+
+function renderizarOrcamento(data, meta) {
+  const numOrc = gerarNumeroOrcamento();
+  const dataHoje = formatarData();
+
+  let secoesHTML = '';
+  data.secoes.forEach(sec => {
+    let rowsHTML = '';
+    sec.itens.forEach(it => {
+      const unit = it.unitario ? `R$ ${Number(it.unitario).toFixed(2).replace('.',',')}` : '—';
+      const sub = it.subtotal ? `R$ ${Number(it.subtotal).toFixed(2).replace('.',',')}` : '—';
+      rowsHTML += `<tr>
+        <td style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;">${it.item}</td>
+        <td style="font-weight:500;">${it.qtd}</td>
+        <td style="color:var(--muted);">${it.unid}</td>
+        <td>${it.descricao}</td>
+        <td>${unit}</td>
+        <td>${sub}</td>
+      </tr>`;
+    });
+    const totalSec = sec.total_secao > 0
+      ? `<tfoot><tr><td colspan="5" style="color:var(--muted);font-size:11px;text-align:right;padding-right:8px;">Total da seção</td><td>R$ ${Number(sec.total_secao).toFixed(2).replace('.',',')}</td></tr></tfoot>`
+      : '';
+
+    secoesHTML += `
+      <div class="orc-section-title">${sec.titulo}</div>
+      <table class="items">
+        <thead><tr>
+          <th style="width:52px">Item</th><th style="width:40px">Qt.</th>
+          <th style="width:44px">Und.</th><th>Descrição</th>
+          <th style="width:80px">Unitário</th><th style="width:80px">Subtotal</th>
+        </tr></thead>
+        <tbody>${rowsHTML}</tbody>${totalSec}
+      </table>`;
+  });
+
+  const totalGeral = data.total_geral > 0
+    ? `<div style="text-align:right;font-size:16px;font-weight:700;color:var(--atx-blue);margin-top:16px;padding-top:12px;border-top:2px solid var(--atx-blue);">Total Geral: R$ ${Number(data.total_geral).toFixed(2).replace('.',',')}</div>`
+    : `<div style="text-align:right;font-size:12px;color:var(--muted);margin-top:12px;font-style:italic;">* Valores unitários a serem definidos conforme cotação.</div>`;
+
+  const attHTML = meta.att ? `<br>Att.: ${meta.att}` : '';
+  const obsHTML = meta.obs ? `<div style="margin-top:12px;padding:10px 14px;background:#FFFBEA;border-left:3px solid #F59E0B;border-radius:0 6px 6px 0;font-size:12px;color:#78350F;">${meta.obs}</div>` : '';
+
+  document.getElementById('orcamento-preview').innerHTML = `
+  <div class="orcamento" id="orcamento-print">
+    <div class="orc-header">
+      <div>
+        <div class="orc-logo">AT<span>X</span></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px;letter-spacing:1px;">TELECOM & SEGURANÇA ELETRÔNICA</div>
+        <div class="orc-num" style="margin-top:10px;">${numOrc}</div>
+      </div>
+      <div class="orc-company-info">
+        <strong>ATX Telecom Ltda.</strong><br>
+        Santo André — SP<br>
+        Tel.: (11) 4997-7000<br>
+        Cel.: (11) 9 4018-5698<br>
+        comercial@atxtelecom.com.br
+      </div>
+    </div>
+    <div class="orc-body">
+      <div class="orc-meta">
+        <div class="orc-meta-block"><label>Data</label><p>${dataHoje}</p></div>
+        <div class="orc-meta-block"><label>Referência</label><p>${meta.ref}</p></div>
+        <div class="orc-meta-block"><label>Cliente</label><p>${meta.cliente}${attHTML}</p></div>
+        <div class="orc-meta-block"><label>Endereço</label><p>${meta.endereco}</p></div>
+      </div>
+      <div class="orc-intro">
+        A <strong>ATX</strong> é uma empresa provedora de Soluções de alta Tecnologia,
+        propiciando aos nossos clientes acesso a estas com a maior qualidade e a um preço
+        extremamente competitivo. Atuando no mercado desde 1968, aliada a fabricantes de
+        renomadas marcas como Intelbras, apresentamos nossa proposta comercial abaixo.
+      </div>
+      ${secoesHTML}
+      ${totalGeral}
+      ${obsHTML}
+      <div class="orc-pagamento">
+        <div><strong>Condições de pagamento:</strong> ${meta.pagamento}</div>
+        <div><strong>Prazo de execução:</strong> ${meta.prazo}</div>
+      </div>
+    </div>
+    <div class="orc-validade">Proposta válida por ${meta.validade} a partir da data de emissão · ${numOrc}</div>
+    <div class="orc-footer">ATX Telecom · Santo André, SP · (11) 4997-7000 · comercial@atxtelecom.com.br</div>
+  </div>`;
+}
+
+function imprimirOrcamento() {
+  const conteudo = document.getElementById('orcamento-print').outerHTML;
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;font-size:12px;color:#0D1B3E;}
+      .orcamento{max-width:800px;margin:0 auto;}
+      .orc-header{background:#0A2463;color:white;padding:20px 24px;display:flex;justify-content:space-between;}
+      .orc-logo{font-family:'DM Serif Display',serif;font-size:24px;letter-spacing:3px;}.orc-logo span{color:#1E90FF;}
+      .orc-company-info{font-size:10px;color:rgba(255,255,255,0.65);line-height:1.8;text-align:right;}.orc-company-info strong{color:white;}
+      .orc-num{display:inline-block;background:#1E90FF;color:white;font-size:10px;font-weight:600;padding:2px 10px;border-radius:20px;margin-top:8px;}
+      .orc-body{padding:20px 24px;}
+      .orc-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #D0D9EF;}
+      .orc-meta-block label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#6B7A9B;}.orc-meta-block p{font-size:12px;font-weight:500;}
+      .orc-intro{background:#E8F0FE;border-left:3px solid #1E90FF;padding:10px 14px;font-size:11px;color:#2A3F6B;line-height:1.6;margin-bottom:16px;}
+      .orc-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#0A2463;background:#EEF3FC;padding:6px 10px;border-radius:4px;margin:12px 0 6px;}
+      table.items{width:100%;border-collapse:collapse;font-size:11px;}
+      table.items thead tr{background:#0A2463;color:white;}table.items thead th{padding:6px 8px;text-align:left;font-weight:500;font-size:10px;text-transform:uppercase;}
+      table.items thead th:last-child,table.items thead th:nth-last-child(2){text-align:right;}
+      table.items tbody tr{border-bottom:1px solid #EEF1F8;}table.items tbody tr:nth-child(even){background:#F8FAFF;}
+      table.items tbody td{padding:6px 8px;}table.items tbody td:last-child,table.items tbody td:nth-last-child(2){text-align:right;font-family:'JetBrains Mono',monospace;font-size:10px;}
+      .orc-pagamento{margin-top:16px;padding-top:12px;border-top:1px solid #D0D9EF;display:flex;justify-content:space-between;font-size:11px;color:#6B7A9B;}.orc-pagamento strong{color:#0D1B3E;}
+      .orc-validade{text-align:center;font-size:10px;color:#6B7A9B;padding:10px;border-top:1px dashed #D0D9EF;margin-top:14px;}
+      .orc-footer{background:#0A2463;color:rgba(255,255,255,0.6);padding:10px 24px;font-size:10px;text-align:center;}
+      @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+    </style></head><body>${conteudo}</body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 600);
+}
+
+function copiarTexto() {
+  const el = document.getElementById('orcamento-print');
+  navigator.clipboard.writeText(el ? el.innerText : '').then(() => alert('Texto copiado!'));
+}
+</script>
+</body>
+</html>
