@@ -386,7 +386,7 @@ function setCA(on){
 function conectarCA(){
   const id='4n0rgm72a203713eqqhlkvo946';
   const uri=encodeURIComponent('https://atx-orcamentos-alpha.vercel.app/api/callback');
-  const sc=encodeURIComponent('openid profile aws.cognito.signin.user.admin');
+  const sc = encodeURIComponent('openid profile aws.cognito.signin.user.admin sales');
   location.href=`https://auth.contaazul.com/oauth2/authorize?response_type=code&client_id=${id}&redirect_uri=${uri}&state=atx&scope=${sc}`;
 }
 let _at2=null;
