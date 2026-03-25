@@ -384,7 +384,7 @@ function setCA(on){
   b.innerHTML=on?'<div>✅ <strong>Conta Azul conectado</strong> — busca ativa</div>':'<div><strong>Conta Azul</strong> — conecte para buscar clientes</div><button class="ca-bar-btn" onclick="conectarCA()">🔗 Conectar</button>';
 }
 function conectarCA(){
-  const id='4n0rgm72a203713eqqhlkvo946';
+  const id='4c28bse0d4aoblrl5jq2c3tnv3';
   const uri=encodeURIComponent('https://atx-orcamentos-alpha.vercel.app/api/callback');
   const sc = encodeURIComponent('openid profile aws.cognito.signin.user.admin');
   location.href=`https://auth.contaazul.com/oauth2/authorize?response_type=code&client_id=${id}&redirect_uri=${uri}&state=atx&scope=${sc}`;
