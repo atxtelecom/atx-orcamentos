@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
 
   try {
     var caRes = await fetch(
-      'https://api.contaazul.com/v1/customers?name=' + encodeURIComponent(q) + '&page=0&size=10',
+     'https://api.contaazul.com/v1/customers?page=0&size=10',
       { headers: { Authorization: 'Bearer ' + accessToken } }
     );
 
